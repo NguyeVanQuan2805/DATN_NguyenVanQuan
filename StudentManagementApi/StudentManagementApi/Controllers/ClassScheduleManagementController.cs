@@ -24,7 +24,7 @@ namespace StudentManagementApi.Controllers
         {
             try
             {
-                // Lấy dữ liệu từ ClassSchedule
+                // Bước 1: Lấy dữ liệu từ ClassSchedule một cách đơn giản
                 var schedules = await _context.ClassSchedules
                     .OrderBy(s => s.DayOfWeek)
                     .ThenBy(s => s.PeriodStart)
@@ -34,33 +34,43 @@ namespace StudentManagementApi.Controllers
                         s.DayOfWeek,
                         s.PeriodStart,
                         s.PeriodEnd,
-                        RoomCode = s.Room,  // Room trong database là string
+                        s.Room,  
                         s.RoomId
                     })
                     .ToListAsync();
 
-                // Lấy thông tin Room riêng
                 var roomIds = schedules.Where(s => s.RoomId.HasValue).Select(s => s.RoomId.Value).Distinct().ToList();
-                var roomDict = new Dictionary<int, Room>();
+                var rooms = new Dictionary<int, dynamic>();
 
                 if (roomIds.Any())
                 {
-                    var rooms = await _context.Set<Room>()
+                    var roomList = await _context.Set<Room>()
                         .Where(r => roomIds.Contains(r.RoomId))
+                        .Select(r => new
+                        {
+                            r.RoomId,
+                            r.RoomCode,
+                            r.RoomName,
+                            r.Building,
+                            r.Capacity,
+                            r.RoomType,
+                            r.IsAvailable
+                        })
                         .ToListAsync();
 
-                    roomDict = rooms.ToDictionary(r => r.RoomId, r => r);
+                    rooms = roomList.ToDictionary(r => r.RoomId, r => r as dynamic);
                 }
 
-                // Kết hợp dữ liệu
-                var result = schedules.Select(s => {
+                var result = new List<object>();
+                foreach (var s in schedules)
+                {
                     string roomDisplay = "Chưa có phòng";
                     string building = null;
                     object roomInfo = null;
 
-                    if (s.RoomId.HasValue && roomDict.ContainsKey(s.RoomId.Value))
+                    if (s.RoomId.HasValue && rooms.ContainsKey(s.RoomId.Value))
                     {
-                        var room = roomDict[s.RoomId.Value];
+                        var room = rooms[s.RoomId.Value];
                         roomDisplay = $"{room.RoomCode} - {room.RoomName} ({room.Building})";
                         building = room.Building;
                         roomInfo = new
@@ -72,12 +82,12 @@ namespace StudentManagementApi.Controllers
                             room.RoomType
                         };
                     }
-                    else if (!string.IsNullOrEmpty(s.RoomCode))
+                    else if (!string.IsNullOrEmpty(s.Room))
                     {
-                        roomDisplay = s.RoomCode;
+                        roomDisplay = s.Room;
                     }
 
-                    return new
+                    result.Add(new
                     {
                         s.ScheduleId,
                         s.DayOfWeek,
@@ -85,22 +95,37 @@ namespace StudentManagementApi.Controllers
                         s.PeriodStart,
                         s.PeriodEnd,
                         PeriodDisplay = $"Tiết {s.PeriodStart} - {s.PeriodEnd}",
-                        Room = s.RoomCode,
+                        Room = s.Room,
                         s.RoomId,
                         RoomDisplay = roomDisplay,
                         Building = building,
                         RoomInfo = roomInfo
-                    };
-                });
+                    });
+                }
 
                 return Ok(result);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error: {ex.Message}");
-                Console.WriteLine($"Stack: {ex.StackTrace}");
-                return StatusCode(500, new { message = ex.Message, stack = ex.StackTrace });
+                Console.WriteLine($"Error in GetAllSchedules: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                return StatusCode(500, new { message = "Lỗi khi tải danh sách lịch học", error = ex.Message });
             }
+        }
+
+        private string GetDayName(int dayOfWeek)
+        {
+            return dayOfWeek switch
+            {
+                2 => "Thứ 2",
+                3 => "Thứ 3",
+                4 => "Thứ 4",
+                5 => "Thứ 5",
+                6 => "Thứ 6",
+                7 => "Thứ 7",
+                8 => "Chủ nhật",
+                _ => $"Thứ {dayOfWeek}"
+            };
         }
 
         // GET: api/ClassScheduleManagement/schedules/{id}
@@ -203,16 +228,20 @@ namespace StudentManagementApi.Controllers
                     {
                         roomId = room.RoomId;
                     }
+                    else
+                    {
+                        return BadRequest(new { message = $"Không tìm thấy phòng với mã {dto.RoomCode}" });
+                    }
                 }
 
-                // Kiểm tra trùng lịch
                 var existing = await _context.ClassSchedules
                     .AnyAsync(s => s.DayOfWeek == dto.DayOfWeek
                                 && s.PeriodStart == dto.PeriodStart
-                                && s.PeriodEnd == dto.PeriodEnd);
+                                && s.PeriodEnd == dto.PeriodEnd
+                                && s.Room == dto.RoomCode);  
 
                 if (existing)
-                    return BadRequest(new { message = "Lịch học này đã tồn tại" });
+                    return BadRequest(new { message = $"Lịch học vào {GetDayName(dto.DayOfWeek)} tiết {dto.PeriodStart}-{dto.PeriodEnd} tại phòng {dto.RoomCode} đã tồn tại" });
 
                 var schedule = new ClassSchedule
                 {
@@ -249,6 +278,28 @@ namespace StudentManagementApi.Controllers
                 if (schedule == null)
                     return NotFound(new { message = "Không tìm thấy lịch học" });
 
+                // Lưu giá trị cũ để kiểm tra
+                var oldDay = schedule.DayOfWeek;
+                var oldStart = schedule.PeriodStart;
+                var oldEnd = schedule.PeriodEnd;
+                var oldRoom = schedule.Room;
+
+                var newDay = dto.DayOfWeek ?? oldDay;
+                var newStart = dto.PeriodStart ?? oldStart;
+                var newEnd = dto.PeriodEnd ?? oldEnd;
+                var newRoom = dto.RoomCode ?? oldRoom;
+
+                var isConflict = await _context.ClassSchedules
+                    .AnyAsync(s => s.ScheduleId != id
+                                && s.DayOfWeek == newDay
+                                && s.PeriodStart == newStart
+                                && s.PeriodEnd == newEnd
+                                && s.Room == newRoom);
+
+                if (isConflict)
+                    return BadRequest(new { message = $"Lịch học vào {GetDayName(newDay)} tiết {newStart}-{newEnd} tại phòng {newRoom} đã tồn tại" });
+
+                // Cập nhật
                 if (dto.DayOfWeek.HasValue)
                     schedule.DayOfWeek = dto.DayOfWeek.Value;
 
@@ -260,7 +311,6 @@ namespace StudentManagementApi.Controllers
 
                 if (!string.IsNullOrEmpty(dto.RoomCode))
                 {
-                    // Tìm room theo RoomCode
                     var room = await _context.Set<Room>()
                         .FirstOrDefaultAsync(r => r.RoomCode == dto.RoomCode);
 
@@ -376,20 +426,7 @@ namespace StudentManagementApi.Controllers
             }
         }
 
-        private string GetDayName(int dayOfWeek)
-        {
-            return dayOfWeek switch
-            {
-                2 => "Thứ 2",
-                3 => "Thứ 3",
-                4 => "Thứ 4",
-                5 => "Thứ 5",
-                6 => "Thứ 6",
-                7 => "Thứ 7",
-                8 => "Chủ nhật",
-                _ => $"Thứ {dayOfWeek}"
-            };
-        }
+        
     }
 
     public class CreateScheduleDto

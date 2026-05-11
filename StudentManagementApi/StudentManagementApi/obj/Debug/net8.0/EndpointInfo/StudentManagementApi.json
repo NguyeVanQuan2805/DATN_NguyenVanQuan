@@ -456,35 +456,18 @@
         "tags": [
           "Advisors"
         ],
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Advisor"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Advisor"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Advisor"
-                  }
-                }
-              }
-            }
+            "description": "OK"
           }
         }
       },
@@ -535,29 +518,6 @@
         }
       }
     },
-    "/api/Advisors/student-stats/{advisorClassId}": {
-      "get": {
-        "tags": [
-          "Advisors"
-        ],
-        "parameters": [
-          {
-            "name": "advisorClassId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
     "/api/Advisors/{id}": {
       "get": {
         "tags": [
@@ -575,24 +535,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/Advisor"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Advisor"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Advisor"
-                }
-              }
-            }
+            "description": "OK"
           }
         }
       },
@@ -646,6 +589,51 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Advisors/by-account/{accountId}": {
+      "get": {
+        "tags": [
+          "Advisors"
+        ],
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Advisors/student-stats/{advisorClassId}": {
+      "get": {
+        "tags": [
+          "Advisors"
+        ],
+        "parameters": [
+          {
+            "name": "advisorClassId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
             }
           }
         ],
@@ -841,7 +829,62 @@
         }
       }
     },
-    "/api/Attendances/{classId}/students": {
+    "/api/Attendances/class/{classId}": {
+      "get": {
+        "tags": [
+          "Attendances"
+        ],
+        "parameters": [
+          {
+            "name": "classId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttendanceResponseDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttendanceResponseDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttendanceResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Attendances/history/{classId}": {
       "get": {
         "tags": [
           "Attendances"
@@ -856,6 +899,75 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttendanceHistoryDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttendanceHistoryDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttendanceHistoryDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Attendances/status-values": {
+      "get": {
+        "tags": [
+          "Attendances"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Attendances/bulk": {
+      "post": {
+        "tags": [
+          "Attendances"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkAttendanceRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkAttendanceRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkAttendanceRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -1136,6 +1248,48 @@
         }
       }
     },
+    "/api/Classes/my-classes/semester/{semesterId}": {
+      "get": {
+        "tags": [
+          "Classes"
+        ],
+        "parameters": [
+          {
+            "name": "semesterId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Classes/{classId}/students": {
       "get": {
         "tags": [
@@ -1385,25 +1539,19 @@
               "text/plain": {
                 "schema": {
                   "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ClassSchedule"
-                  }
+                  "items": { }
                 }
               },
               "application/json": {
                 "schema": {
                   "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ClassSchedule"
-                  }
+                  "items": { }
                 }
               },
               "text/json": {
                 "schema": {
                   "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ClassSchedule"
-                  }
+                  "items": { }
                 }
               }
             }
@@ -1810,6 +1958,53 @@
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/CourseRegistrations/check-eligibility/{studentId}/{classId}": {
+      "get": {
+        "tags": [
+          "CourseRegistrations"
+        ],
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "classId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/EligibilityResultDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EligibilityResultDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EligibilityResultDto"
+                }
+              }
+            }
           }
         }
       }
@@ -2288,25 +2483,19 @@
               "text/plain": {
                 "schema": {
                   "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Gpa"
-                  }
+                  "items": { }
                 }
               },
               "application/json": {
                 "schema": {
                   "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Gpa"
-                  }
+                  "items": { }
                 }
               },
               "text/json": {
                 "schema": {
                   "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Gpa"
-                  }
+                  "items": { }
                 }
               }
             }
@@ -2378,24 +2567,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/Gpa"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Gpa"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Gpa"
-                }
-              }
-            }
+            "description": "OK"
           }
         }
       },
@@ -2457,53 +2629,6 @@
         "responses": {
           "200": {
             "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/Gpas/calculate/{studentId}/{semesterId}": {
-      "get": {
-        "tags": [
-          "Gpas"
-        ],
-        "parameters": [
-          {
-            "name": "studentId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "semesterId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/Gpa"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Gpa"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Gpa"
-                }
-              }
-            }
           }
         }
       }
@@ -2550,10 +2675,50 @@
         }
       }
     },
-    "/api/Grades": {
+    "/api/Gpas/calculate/{studentId}/{semesterId}": {
+      "post": {
+        "tags": [
+          "Gpas"
+        ],
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "semesterId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Gpas/real-time/{studentId}": {
       "get": {
         "tags": [
-          "Grades"
+          "Gpas"
+        ],
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -2562,71 +2727,19 @@
               "text/plain": {
                 "schema": {
                   "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Grade"
-                  }
+                  "items": { }
                 }
               },
               "application/json": {
                 "schema": {
                   "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Grade"
-                  }
+                  "items": { }
                 }
               },
               "text/json": {
                 "schema": {
                   "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Grade"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Grades"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Grade"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Grade"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/Grade"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/Grade"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Grade"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Grade"
+                  "items": { }
                 }
               }
             }
@@ -2634,193 +2747,33 @@
         }
       }
     },
-    "/api/Grades/{id}": {
+    "/api/Gpas/calculate-all/{studentId}": {
+      "post": {
+        "tags": [
+          "Gpas"
+        ],
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Gpas/debug": {
       "get": {
         "tags": [
-          "Grades"
+          "Gpas"
         ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/Grade"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Grade"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Grade"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Grades"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Grade"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Grade"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/Grade"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Grades"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/Grades/submit-for-approval": {
-      "post": {
-        "tags": [
-          "Grades"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SubmitApprovalDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SubmitApprovalDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/SubmitApprovalDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/Grades/approve": {
-      "post": {
-        "tags": [
-          "Grades"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GradeApprovalDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GradeApprovalDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/GradeApprovalDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/Grades/reject": {
-      "post": {
-        "tags": [
-          "Grades"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GradeApprovalDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GradeApprovalDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/GradeApprovalDto"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "OK"
@@ -2848,6 +2801,99 @@
             "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/BulkGradeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Grades/submit": {
+      "post": {
+        "tags": [
+          "Grades"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitGradeDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitGradeDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitGradeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Grades/approve": {
+      "post": {
+        "tags": [
+          "Grades"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitGradeDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitGradeDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitGradeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Grades/reject": {
+      "post": {
+        "tags": [
+          "Grades"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitGradeDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitGradeDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitGradeDto"
               }
             }
           }
@@ -2943,7 +2989,7 @@
         }
       }
     },
-    "/api/Grades/{classId}/students": {
+    "/api/Grades/pending/{classId}": {
       "get": {
         "tags": [
           "Grades"
@@ -2960,7 +3006,27 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              }
+            }
           }
         }
       }
@@ -3318,6 +3384,18 @@
         }
       }
     },
+    "/api/GraduationRequests/check-eligibility": {
+      "get": {
+        "tags": [
+          "GraduationRequests"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Notifications": {
       "get": {
         "tags": [
@@ -3414,6 +3492,90 @@
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Notifications/sent": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Notifications/classes": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              }
+            }
           }
         }
       }
@@ -4328,10 +4490,20 @@
         }
       }
     },
-    "/api/SemesterManagement/current": {
+    "/api/SemesterManagement/registration-stats/{semesterId}": {
       "get": {
         "tags": [
           "SemesterManagement"
+        ],
+        "parameters": [
+          {
+            "name": "semesterId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -4340,8 +4512,30 @@
         }
       }
     },
-    "/api/SemesterManagement/registration-stats/{semesterId}": {
+    "/api/SemesterManagement/check-low-enrollment/{semesterId}": {
       "get": {
+        "tags": [
+          "SemesterManagement"
+        ],
+        "parameters": [
+          {
+            "name": "semesterId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/SemesterManagement/cancel-low-enrollment/{semesterId}": {
+      "post": {
         "tags": [
           "SemesterManagement"
         ],
@@ -4544,40 +4738,45 @@
         }
       }
     },
+    "/api/Semesters/check-registration-status/{semesterId}": {
+      "get": {
+        "tags": [
+          "Semesters"
+        ],
+        "parameters": [
+          {
+            "name": "semesterId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Students": {
       "get": {
         "tags": [
           "Students"
         ],
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Student"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Student"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Student"
-                  }
-                }
-              }
-            }
+            "description": "OK"
           }
         }
       },
@@ -4645,24 +4844,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/Student"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Student"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Student"
-                }
-              }
-            }
+            "description": "OK"
           }
         }
       },
@@ -4712,6 +4894,28 @@
         "parameters": [
           {
             "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Students/by-account/{accountId}": {
+      "get": {
+        "tags": [
+          "Students"
+        ],
+        "parameters": [
+          {
+            "name": "accountId",
             "in": "path",
             "required": true,
             "schema": {
@@ -4804,6 +5008,147 @@
                 "schema": {
                   "type": "array",
                   "items": { }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Students/{studentId}/advisor": {
+      "get": {
+        "tags": [
+          "Students"
+        ],
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Students/my-program-progress": {
+      "get": {
+        "tags": [
+          "Students"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Students/academic-summary": {
+      "get": {
+        "tags": [
+          "Students"
+        ],
+        "parameters": [
+          {
+            "name": "includeDetails",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcademicSummaryDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcademicSummaryDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcademicSummaryDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Students/graduation-eligibility": {
+      "get": {
+        "tags": [
+          "Students"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraduationEligibilityDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraduationEligibilityDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraduationEligibilityDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Students/recalculate-gpa/{studentId}": {
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecalculationResultDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecalculationResultDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecalculationResultDto"
                 }
               }
             }
@@ -5135,6 +5480,141 @@
         }
       }
     },
+    "/api/SystemConfigs/tuition-config": {
+      "get": {
+        "tags": [
+          "SystemConfigs"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "SystemConfigs"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TuitionConfigDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TuitionConfigDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TuitionConfigDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/SystemConfigs/credit-limits": {
+      "get": {
+        "tags": [
+          "SystemConfigs"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "SystemConfigs"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreditLimitsDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreditLimitsDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreditLimitsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/SystemConfigs/payment-config": {
+      "get": {
+        "tags": [
+          "SystemConfigs"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "SystemConfigs"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentConfigDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentConfigDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentConfigDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/SystemConfigs/payment-config/public": {
+      "get": {
+        "tags": [
+          "SystemConfigs"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Teachers": {
       "get": {
         "tags": [
@@ -5210,24 +5690,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/Teacher"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Teacher"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Teacher"
-                }
-              }
-            }
+            "description": "OK"
           }
         }
       },
@@ -5277,6 +5740,28 @@
         "parameters": [
           {
             "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Teachers/by-account/{accountId}": {
+      "get": {
+        "tags": [
+          "Teachers"
+        ],
+        "parameters": [
+          {
+            "name": "accountId",
             "in": "path",
             "required": true,
             "schema": {
@@ -5540,6 +6025,79 @@
         }
       }
     },
+    "/api/Tuitions": {
+      "get": {
+        "tags": [
+          "Tuitions"
+        ],
+        "parameters": [
+          {
+            "name": "semesterId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Tuitions/my-payments": {
+      "get": {
+        "tags": [
+          "Tuitions"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Tuitions/payment/{paymentId}/confirm": {
       "put": {
         "tags": [
@@ -5609,6 +6167,90 @@
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Tuitions/calculate/{studentId}/{semesterId}": {
+      "post": {
+        "tags": [
+          "Tuitions"
+        ],
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "semesterId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Tuitions/calculate-batch/{semesterId}": {
+      "post": {
+        "tags": [
+          "Tuitions"
+        ],
+        "parameters": [
+          {
+            "name": "semesterId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Tuitions/payments/history": {
+      "get": {
+        "tags": [
+          "Tuitions"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              }
+            }
           }
         }
       }
@@ -5814,6 +6456,38 @@
         }
       }
     },
+    "/api/Warnings/my-warnings": {
+      "get": {
+        "tags": [
+          "Warnings"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/WeatherForecast": {
       "get": {
         "tags": [
@@ -5856,6 +6530,147 @@
   },
   "components": {
     "schemas": {
+      "AcademicSummaryDto": {
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "nullable": true
+          },
+          "studentCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "fullName": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "major": {
+            "type": "string",
+            "nullable": true
+          },
+          "admissionYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "advisorClassName": {
+            "type": "string",
+            "nullable": true
+          },
+          "curriculumName": {
+            "type": "string",
+            "nullable": true
+          },
+          "curriculumCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "totalCreditsRequired": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "completedCredits": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "remainingCredits": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "progressPercentage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cumulativeGpa": {
+            "type": "number",
+            "format": "double"
+          },
+          "cumulativeGpaClassification": {
+            "type": "string",
+            "nullable": true
+          },
+          "semesterGpas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SemesterGpaDto"
+            },
+            "nullable": true
+          },
+          "totalCoursesTaken": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "passedCourses": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "failedCourses": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pendingCourses": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "submittedCourses": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "averageScore": {
+            "type": "number",
+            "format": "double"
+          },
+          "isEligibleToGraduate": {
+            "type": "boolean"
+          },
+          "graduationIssues": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "tuitionDebt": {
+            "type": "number",
+            "format": "double"
+          },
+          "mandatorySubjectsCompleted": {
+            "type": "boolean"
+          },
+          "missingMandatorySubjects": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "subjectGradeDetails": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubjectGradeDetailDto"
+            },
+            "nullable": true
+          },
+          "letterGradeToGpa4": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "format": "double"
+            },
+            "nullable": true
+          },
+          "scoreToGpa4Mapping": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "format": "double"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "Account": {
         "type": "object",
         "properties": {
@@ -6166,6 +6981,48 @@
         },
         "additionalProperties": false
       },
+      "AttendanceHistoryDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "nullable": true
+          },
+          "periodStart": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "periodEnd": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "room": {
+            "type": "string",
+            "nullable": true
+          },
+          "totalStudents": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "presentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "absentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lateCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "excusedCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "AttendanceResponseDto": {
         "type": "object",
         "properties": {
@@ -6207,6 +7064,45 @@
           },
           "notes": {
             "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "BulkAttendanceItem": {
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "BulkAttendanceRequest": {
+        "type": "object",
+        "properties": {
+          "classId": {
+            "type": "string",
+            "nullable": true
+          },
+          "date": {
+            "type": "string",
+            "nullable": true
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BulkAttendanceItem"
+            },
             "nullable": true
           }
         },
@@ -6562,35 +7458,62 @@
         "additionalProperties": false
       },
       "CreateSemesterDto": {
+        "required": [
+          "academicYear",
+          "endDate",
+          "semesterId",
+          "semesterName",
+          "semesterNumber",
+          "startDate"
+        ],
         "type": "object",
         "properties": {
           "semesterId": {
-            "type": "string",
-            "nullable": true
+            "minLength": 1,
+            "pattern": "^HK\\d{4}_[1-3]$",
+            "type": "string"
           },
           "semesterName": {
-            "type": "string",
-            "nullable": true
+            "minLength": 1,
+            "type": "string"
           },
           "academicYear": {
+            "maximum": 2030,
+            "minimum": 2000,
             "type": "integer",
             "format": "int32"
           },
           "semesterNumber": {
+            "maximum": 3,
+            "minimum": 1,
             "type": "integer",
             "format": "int32"
           },
           "startDate": {
             "type": "string",
-            "format": "date"
+            "format": "date-time"
           },
           "endDate": {
             "type": "string",
-            "format": "date"
+            "format": "date-time"
           },
           "isRegistrationOpen": {
             "type": "boolean",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreditLimitsDto": {
+        "type": "object",
+        "properties": {
+          "minCredits": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxCredits": {
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false
@@ -6636,6 +7559,31 @@
               "$ref": "#/components/schemas/Teacher"
             },
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EligibilityResultDto": {
+        "type": "object",
+        "properties": {
+          "classAvailable": {
+            "type": "boolean"
+          },
+          "prerequisitePassed": {
+            "type": "boolean"
+          },
+          "noScheduleConflict": {
+            "type": "boolean"
+          },
+          "withinCreditLimit": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "isEligible": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -6733,28 +7681,17 @@
             "type": "boolean",
             "nullable": true
           },
+          "status": {
+            "maxLength": 20,
+            "minLength": 0,
+            "type": "string",
+            "nullable": true
+          },
           "class": {
             "$ref": "#/components/schemas/Class"
           },
           "student": {
             "$ref": "#/components/schemas/Student"
-          }
-        },
-        "additionalProperties": false
-      },
-      "GradeApprovalDto": {
-        "type": "object",
-        "properties": {
-          "classId": {
-            "type": "string",
-            "nullable": true
-          },
-          "studentIds": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
           }
         },
         "additionalProperties": false
@@ -6780,6 +7717,49 @@
             "type": "number",
             "format": "double",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "GraduationEligibilityDto": {
+        "type": "object",
+        "properties": {
+          "isEligible": {
+            "type": "boolean"
+          },
+          "totalCreditsEarned": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "requiredCredits": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cumulativeGpa": {
+            "type": "number",
+            "format": "double"
+          },
+          "requiredGpa": {
+            "type": "number",
+            "format": "double"
+          },
+          "tuitionDebt": {
+            "type": "number",
+            "format": "double"
+          },
+          "mandatoryCompleted": {
+            "type": "boolean"
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "missingCredits": {
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false
@@ -6898,6 +7878,43 @@
         },
         "additionalProperties": false
       },
+      "PaymentConfigDto": {
+        "type": "object",
+        "properties": {
+          "bankName": {
+            "type": "string",
+            "nullable": true
+          },
+          "bankAccountNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "bankAccountName": {
+            "type": "string",
+            "nullable": true
+          },
+          "momoEnabled": {
+            "type": "boolean"
+          },
+          "momoPartnerCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "momoAccessKey": {
+            "type": "string",
+            "nullable": true
+          },
+          "momoSecretKey": {
+            "type": "string",
+            "nullable": true
+          },
+          "qrCodeType": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "PaymentConfirmDto": {
         "type": "object",
         "properties": {
@@ -6953,6 +7970,34 @@
           },
           "subject": {
             "$ref": "#/components/schemas/Subject"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RecalculationResultDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "semestersRecalculated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "newCumulativeGpa": {
+            "type": "number",
+            "format": "double"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -7044,13 +8089,6 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
-          },
-          "classSchedules": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ClassSchedule"
-            },
-            "nullable": true
           }
         },
         "additionalProperties": false
@@ -7188,6 +8226,52 @@
               "$ref": "#/components/schemas/GraduationRequest"
             },
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SemesterGpaDto": {
+        "type": "object",
+        "properties": {
+          "semesterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "semesterName": {
+            "type": "string",
+            "nullable": true
+          },
+          "academicYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "semesterNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "gpa": {
+            "type": "number",
+            "format": "double"
+          },
+          "cumulativeGpa": {
+            "type": "number",
+            "format": "double"
+          },
+          "earnedCredits": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "registeredCredits": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false
@@ -7394,6 +8478,71 @@
         },
         "additionalProperties": false
       },
+      "SubjectGradeDetailDto": {
+        "type": "object",
+        "properties": {
+          "subjectId": {
+            "type": "string",
+            "nullable": true
+          },
+          "subjectCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "subjectName": {
+            "type": "string",
+            "nullable": true
+          },
+          "credits": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "processScore": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "midtermScore": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "finalScore": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "totalScore": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "letterGrade": {
+            "type": "string",
+            "nullable": true
+          },
+          "gpa4Value": {
+            "type": "number",
+            "format": "double"
+          },
+          "isPassed": {
+            "type": "boolean"
+          },
+          "semesterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "semesterName": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "SubjectUpdateDto": {
         "type": "object",
         "properties": {
@@ -7429,7 +8578,7 @@
         },
         "additionalProperties": false
       },
-      "SubmitApprovalDto": {
+      "SubmitGradeDto": {
         "type": "object",
         "properties": {
           "classId": {
@@ -7607,6 +8756,24 @@
             "format": "int32"
           },
           "baseAmount": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TuitionConfigDto": {
+        "type": "object",
+        "properties": {
+          "pricePerCredit": {
+            "type": "number",
+            "format": "double"
+          },
+          "paymentDeadline": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lateFee": {
             "type": "number",
             "format": "double"
           }
@@ -7794,12 +8961,12 @@
           },
           "startDate": {
             "type": "string",
-            "format": "date",
+            "format": "date-time",
             "nullable": true
           },
           "endDate": {
             "type": "string",
-            "format": "date",
+            "format": "date-time",
             "nullable": true
           },
           "isRegistrationOpen": {

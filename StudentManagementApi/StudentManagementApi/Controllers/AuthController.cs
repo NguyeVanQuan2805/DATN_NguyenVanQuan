@@ -75,7 +75,7 @@ namespace StudentManagementApi.Controllers
                 }
             });
         }
-        // Controllers/AuthController.cs - Thêm method
+        // Controllers/AuthController.cs 
         [HttpGet("check-maintenance")]
         public async Task<IActionResult> CheckMaintenance()
         {

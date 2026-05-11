@@ -120,7 +120,6 @@ public class WarningsController : ControllerBase
     }
 
     // GET: api/Warnings/advisor-summary/{advisorId}
-    // GET: api/Warnings/advisor-summary/{advisorId}
     [HttpGet("advisor-summary/{advisorId}")]
     [Authorize(Roles = "ADVISOR")]
     public async Task<ActionResult<object>> GetAdvisorWarningsSummary(string advisorId)
@@ -179,6 +178,52 @@ public class WarningsController : ControllerBase
         {
             Console.WriteLine($"Error in GetAdvisorWarningsSummary: {ex.Message}");
             return StatusCode(500, new { message = "Lỗi server", error = ex.Message });
+        }
+    }
+
+    [HttpGet("my-warnings")]
+    [Authorize(Roles = "STUDENT")]
+    public async Task<ActionResult<IEnumerable<object>>> GetMyWarnings()
+    {
+        try
+        {
+            var studentId = User.FindFirst("studentId")?.Value;
+
+            if (string.IsNullOrEmpty(studentId))
+            {
+                // Fallback: tìm từ AccountId
+                var accountId = User.FindFirst("accountId")?.Value;
+                var student = await _context.Students
+                    .FirstOrDefaultAsync(s => s.AccountId == accountId);
+                if (student == null)
+                    return Unauthorized("Không tìm thấy thông tin sinh viên");
+                studentId = student.StudentId;
+            }
+
+            var warnings = await _context.Warnings
+                .Include(w => w.Semester)
+                .Where(w => w.StudentId == studentId)
+                .Select(w => new
+                {
+                    w.WarningId,
+                    w.StudentId,
+                    w.SemesterId,
+                    SemesterName = w.Semester != null ? w.Semester.SemesterName : "N/A",
+                    w.WarningLevel,
+                    w.WarningReason,
+                    w.IssuedDate,
+                    w.Status,
+                    w.ResolutionNotes
+                })
+                .OrderByDescending(w => w.IssuedDate)
+                .ToListAsync();
+
+            return Ok(warnings);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in GetMyWarnings: {ex.Message}");
+            return StatusCode(500, new { message = "Lỗi server khi tải cảnh báo", error = ex.Message });
         }
     }
 }

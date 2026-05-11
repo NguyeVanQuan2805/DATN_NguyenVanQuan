@@ -234,6 +234,12 @@ public class CourseRegistrationsController : ControllerBase
 
         try
         {
+            // Kiểm tra dữ liệu đầu vào
+            if (string.IsNullOrEmpty(dto.StudentId) || string.IsNullOrEmpty(dto.ClassId))
+            {
+                return BadRequest(new { message = "Thiếu thông tin đăng ký" });
+            }
+
             // Kiểm tra sinh viên tồn tại
             var student = await _context.Students
                 .FirstOrDefaultAsync(s => s.StudentId == dto.StudentId);
@@ -241,13 +247,20 @@ public class CourseRegistrationsController : ControllerBase
             if (student == null)
                 return BadRequest(new { message = "Sinh viên không tồn tại" });
 
-            // Kiểm tra lớp tồn tại
+            // Kiểm tra lớp tồn tại - Include đầy đủ thông tin cần thiết
             var cls = await _context.Classes
                 .Include(c => c.Subject)
+                .Include(c => c.Schedule)
                 .FirstOrDefaultAsync(c => c.ClassId == dto.ClassId);
 
             if (cls == null)
                 return BadRequest(new { message = "Lớp học phần không tồn tại" });
+
+            // Kiểm tra Schedule có tồn tại không
+            if (cls.Schedule == null)
+            {
+                return BadRequest(new { message = "Lớp học phần chưa có lịch học" });
+            }
 
             // Kiểm tra lớp còn mở đăng ký
             if (cls.Status != "OPEN")
@@ -264,74 +277,93 @@ public class CourseRegistrationsController : ControllerBase
             if (existing)
                 return BadRequest(new { message = "Bạn đã đăng ký lớp học phần này rồi" });
 
-            // Kiểm tra tiên quyết
-            var prerequisites = await _context.Prerequisites
-                .Where(p => p.SubjectId == cls.SubjectId)
-                .Select(p => p.RequiredSubjectId)
+            // Lấy danh sách các lớp đã đăng ký APPROVED trong cùng học kỳ
+            var registeredClasses = await _context.CourseRegistrations
+                .Where(r => r.StudentId == dto.StudentId
+                         && r.Status == "APPROVED"
+                         && r.Class.SemesterId == cls.SemesterId)
+                .Include(r => r.Class)
+                    .ThenInclude(c => c.Schedule)
+                .Include(r => r.Class)
+                    .ThenInclude(c => c.Subject)
                 .ToListAsync();
 
-            foreach (var reqId in prerequisites)
-            {
-                var hasPassed = await _context.Grades
-                    .AnyAsync(g => g.StudentId == dto.StudentId
-                                && g.Class.SubjectId == reqId
-                                && g.TotalScore >= 5.0m);
+            // Kiểm tra trùng lịch chi tiết
+            var conflictingClasses = new List<string>();
 
-                if (!hasPassed)
+            foreach (var reg in registeredClasses)
+            {
+                var existingSchedule = reg.Class?.Schedule;
+                var newSchedule = cls.Schedule;
+
+                if (existingSchedule != null && newSchedule != null)
                 {
-                    var reqSubject = await _context.Subjects
-                        .FirstOrDefaultAsync(s => s.SubjectId == reqId);
-                    return BadRequest(new
+                    // Kiểm tra cùng ngày trong tuần
+                    if (existingSchedule.DayOfWeek == newSchedule.DayOfWeek)
                     {
-                        message = $"Chưa hoàn thành môn tiên quyết: {reqSubject?.SubjectName ?? reqId}"
-                    });
+                        // Kiểm tra khoảng thời gian trùng nhau
+                        bool isOverlap = !(newSchedule.PeriodEnd < existingSchedule.PeriodStart
+                                        || newSchedule.PeriodStart > existingSchedule.PeriodEnd);
+
+                        if (isOverlap)
+                        {
+                            conflictingClasses.Add($"{reg.Class.ClassCode} - {reg.Class.Subject?.SubjectName ?? "N/A"}");
+                        }
+                    }
                 }
             }
 
-            // Kiểm tra trùng lịch
-            var studentSchedules = await _context.CourseRegistrations
-                .Where(r => r.StudentId == dto.StudentId
-                         && r.Status == "APPROVED"
-                         && r.Class.SemesterId == cls.SemesterId)
-                .Select(r => r.Class.ScheduleId)
-                .ToListAsync();
-
-            if (studentSchedules.Contains(cls.ScheduleId))
+            // Nếu có xung đột lịch, trả về lỗi
+            if (conflictingClasses.Any())
             {
-                var schedule = await _context.ClassSchedules
-                    .FirstOrDefaultAsync(s => s.ScheduleId == cls.ScheduleId);
+                var conflictMessage = $"Lịch học bị trùng với các lớp sau:\n• " +
+                                      string.Join("\n• ", conflictingClasses);
                 return BadRequest(new
                 {
-                    message = $"Trùng lịch học: {GetScheduleText(schedule)}"
+                    message = conflictMessage,
+                    conflict = true,
+                    conflictingClasses = conflictingClasses
                 });
             }
 
-            // Kiểm tra giới hạn tín chỉ
+            // Lấy cấu hình giới hạn tín chỉ
+            var minCreditsStr = await _context.SystemConfigs
+                .Where(c => c.ConfigKey == "MinCreditsPerSemester")
+                .Select(c => c.ConfigValue)
+                .FirstOrDefaultAsync();
+
             var maxCreditsStr = await _context.SystemConfigs
                 .Where(c => c.ConfigKey == "MaxCreditsPerSemester")
                 .Select(c => c.ConfigValue)
-                .FirstOrDefaultAsync() ?? "22";
+                .FirstOrDefaultAsync();
 
-            var maxCredits = int.Parse(maxCreditsStr);
+            var minCredits = 15; 
+            var maxCredits = 33; 
 
-            var currentCredits = await _context.CourseRegistrations
-                .Where(r => r.StudentId == dto.StudentId
-                         && r.Status == "APPROVED"
-                         && r.Class.SemesterId == cls.SemesterId)
-                .SumAsync(r => r.Class.Subject.Credits);
+            if (!string.IsNullOrEmpty(maxCreditsStr))
+                int.TryParse(maxCreditsStr, out maxCredits);
+            if (!string.IsNullOrEmpty(minCreditsStr))
+                int.TryParse(minCreditsStr, out minCredits);
 
-            if (currentCredits + cls.Subject.Credits > maxCredits)
+            // Tính tín chỉ hiện tại
+            var currentCredits = registeredClasses
+                .Sum(r => r.Class?.Subject?.Credits ?? 0);
+
+            // Kiểm tra tín chỉ tối đa
+            if (currentCredits + (cls.Subject?.Credits ?? 0) > maxCredits)
+            {
                 return BadRequest(new
                 {
-                    message = $"Vượt quá số tín chỉ tối đa ({maxCredits} tín chỉ)"
+                    message = $"Vượt quá số tín chỉ tối đa ({maxCredits} tín chỉ). Hiện tại: {currentCredits}, thêm: {cls.Subject?.Credits ?? 0}"
                 });
+            }
 
-            // THÊM ĐĂNG KÝ - TRẠNG THÁI APPROVED NGAY LẬP TỨC
+            // Tạo đăng ký mới
             var registration = new CourseRegistration
             {
                 StudentId = dto.StudentId,
                 ClassId = dto.ClassId,
-                Status = "APPROVED", // APPROVED ngay, không cần chờ duyệt
+                Status = "APPROVED",
                 RegisteredAt = DateTime.UtcNow
             };
 
@@ -343,17 +375,39 @@ public class CourseRegistrationsController : ControllerBase
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
+            // Tính tổng tín chỉ mới
+            var newTotalCredits = currentCredits + (cls.Subject?.Credits ?? 0);
+            var warningMessage = newTotalCredits < minCredits
+                ? $"Lưu ý: Bạn mới đăng ký {newTotalCredits}/{minCredits} tín chỉ. Hãy đăng ký thêm {minCredits - newTotalCredits} tín chỉ nữa!"
+                : null;
+
             return Ok(new
             {
-                message = "Đăng ký thành công!",
-                registrationId = registration.RegistrationId
+                message = warningMessage ?? "Đăng ký thành công!",
+                registrationId = registration.RegistrationId,
+                warning = warningMessage,
+                currentCredits = newTotalCredits,
+                minRequired = minCredits,
+                maxAllowed = maxCredits
             });
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            Console.WriteLine($"Lỗi đăng ký: {ex.Message}");
-            return StatusCode(500, new { message = "Lỗi server khi đăng ký", error = ex.Message });
+            Console.WriteLine($"LỖI ĐĂNG KÝ CHI TIẾT: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"Inner Exception: {ex.InnerException.Message}");
+            }
+
+            return StatusCode(500, new
+            {
+                message = "Lỗi server khi đăng ký",
+                error = ex.Message,
+                innerError = ex.InnerException?.Message,
+                stackTrace = ex.StackTrace
+            });
         }
     }
 
@@ -524,6 +578,165 @@ public class CourseRegistrationsController : ControllerBase
 
         return NoContent();
     }
+
+    // Trong CourseRegistrationsController.cs, thêm method sau:
+
+    [HttpGet("check-eligibility/{studentId}/{classId}")]
+    [Authorize(Roles = "STUDENT")]
+    public async Task<ActionResult<EligibilityResultDto>> CheckEligibility(string studentId, string classId)
+    {
+        try
+        {
+            var result = new EligibilityResultDto
+            {
+                ClassAvailable = false,
+                PrerequisitePassed = true,
+                NoScheduleConflict = true,
+                WithinCreditLimit = true,
+                Message = "",
+                IsEligible = false
+            };
+
+            // 1. Kiểm tra sinh viên tồn tại
+            var student = await _context.Students
+                .FirstOrDefaultAsync(s => s.StudentId == studentId);
+
+            if (student == null)
+            {
+                result.Message = "Sinh viên không tồn tại";
+                return Ok(result);
+            }
+
+            // 2. Kiểm tra lớp tồn tại
+            var cls = await _context.Classes
+                .Include(c => c.Subject)
+                .Include(c => c.Schedule)
+                .FirstOrDefaultAsync(c => c.ClassId == classId);
+
+            if (cls == null)
+            {
+                result.Message = "Lớp học phần không tồn tại";
+                return Ok(result);
+            }
+
+            // 3. Kiểm tra lớp còn chỗ và mở đăng ký
+            result.ClassAvailable = cls.Status == "OPEN" && cls.CurrentStudents < cls.MaxStudents;
+            if (!result.ClassAvailable)
+            {
+                result.Message = "Lớp đã đầy hoặc không mở đăng ký";
+            }
+
+            // 4. Kiểm tra điều kiện tiên quyết
+            var prerequisites = await _context.Prerequisites
+                .Where(p => p.SubjectId == cls.SubjectId)
+                .Select(p => p.RequiredSubjectId)
+                .ToListAsync();
+
+            foreach (var reqId in prerequisites)
+            {
+                var hasPassed = await _context.Grades
+                    .AnyAsync(g => g.StudentId == studentId
+                                && g.Class.SubjectId == reqId
+                                && g.TotalScore >= 5.0m
+                                && g.IsApproved == true);
+
+                if (!hasPassed)
+                {
+                    var reqSubject = await _context.Subjects
+                        .FirstOrDefaultAsync(s => s.SubjectId == reqId);
+                    result.PrerequisitePassed = false;
+                    result.Message = $"Chưa hoàn thành môn tiên quyết: {reqSubject?.SubjectName ?? reqId}";
+                    break;
+                }
+            }
+
+            // 5. Kiểm tra trùng lịch (chỉ kiểm tra nếu có Schedule)
+            if (result.PrerequisitePassed && cls.Schedule != null)
+            {
+                var registeredClasses = await _context.CourseRegistrations
+                    .Where(r => r.StudentId == studentId
+                             && r.Status == "APPROVED"
+                             && r.Class.SemesterId == cls.SemesterId)
+                    .Include(r => r.Class)
+                        .ThenInclude(c => c.Schedule)
+                    .ToListAsync();
+
+                foreach (var reg in registeredClasses)
+                {
+                    var existingSchedule = reg.Class?.Schedule;
+                    if (existingSchedule != null && existingSchedule.DayOfWeek == cls.Schedule.DayOfWeek)
+                    {
+                        bool isOverlap = !(cls.Schedule.PeriodEnd < existingSchedule.PeriodStart
+                                        || cls.Schedule.PeriodStart > existingSchedule.PeriodEnd);
+
+                        if (isOverlap)
+                        {
+                            result.NoScheduleConflict = false;
+                            result.Message = $"Trùng lịch với môn {reg.Class?.Subject?.SubjectName ?? reg.Class?.ClassCode}";
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // 6. Kiểm tra giới hạn tín chỉ
+            if (result.PrerequisitePassed && result.NoScheduleConflict)
+            {
+                var maxCreditsStr = await _context.SystemConfigs
+                    .Where(c => c.ConfigKey == "MaxCreditsPerSemester")
+                    .Select(c => c.ConfigValue)
+                    .FirstOrDefaultAsync() ?? "33";
+
+                var maxCredits = int.Parse(maxCreditsStr);
+
+                var currentCredits = await _context.CourseRegistrations
+                    .Where(r => r.StudentId == studentId
+                             && r.Status == "APPROVED"
+                             && r.Class.SemesterId == cls.SemesterId)
+                    .SumAsync(r => r.Class.Subject.Credits);
+
+                result.WithinCreditLimit = currentCredits + (cls.Subject?.Credits ?? 0) <= maxCredits;
+
+                if (!result.WithinCreditLimit)
+                {
+                    result.Message = $"Vượt quá giới hạn tín chỉ ({maxCredits} tín chỉ)";
+                }
+            }
+
+            // 7. Kết luận
+            result.IsEligible = result.ClassAvailable && result.PrerequisitePassed &&
+                                result.NoScheduleConflict && result.WithinCreditLimit;
+
+            if (result.IsEligible)
+            {
+                result.Message = "Đủ điều kiện đăng ký môn học này";
+            }
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Lỗi check eligibility: {ex.Message}");
+            return StatusCode(500, new EligibilityResultDto
+            {
+                IsEligible = false,
+                Message = $"Lỗi server: {ex.Message}"
+            });
+        }
+    }
+
+    // DTO cho kết quả kiểm tra
+    public class EligibilityResultDto
+    {
+        public bool ClassAvailable { get; set; }
+        public bool PrerequisitePassed { get; set; }
+        public bool NoScheduleConflict { get; set; }
+        public bool WithinCreditLimit { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public bool IsEligible { get; set; }
+    }
+
+
 
     private bool CourseRegistrationExists(int id)
     {

@@ -190,6 +190,8 @@ public class TuitionsController : ControllerBase
         });
     }
 
+
+
     // GET: api/Tuitions/payments/pending
     [HttpGet("payments/pending")]
     [Authorize(Roles = "ADMIN")]
@@ -223,6 +225,79 @@ public class TuitionsController : ControllerBase
 
         return Ok(payments);
     }
+
+    // GET: api/Tuitions
+    [HttpGet]
+    [Authorize(Roles = "ADMIN")]
+    public async Task<ActionResult<IEnumerable<object>>> GetTuitions([FromQuery] string? semesterId = null)
+    {
+        var query = _context.Tuitions
+            .Include(t => t.Student)
+                .ThenInclude(s => s.Account)
+            .Include(t => t.Semester)
+            .AsQueryable();
+
+        if (!string.IsNullOrEmpty(semesterId))
+        {
+            query = query.Where(t => t.SemesterId == semesterId);
+        }
+
+        var tuitions = await query
+            .Select(t => new
+            {
+                t.TuitionId,
+                t.StudentId,
+                StudentCode = t.Student != null ? t.Student.StudentCode : "N/A",
+                StudentName = t.Student != null && t.Student.Account != null
+                    ? t.Student.Account.FullName
+                    : "N/A",
+                t.SemesterId,
+                SemesterName = t.Semester != null ? t.Semester.SemesterName : "N/A",
+                t.FeeType,
+                t.Amount,
+                t.AmountPaid,
+                Remaining = t.Amount - t.AmountPaid,
+                t.DueDate,
+                t.Status,
+                t.Notes
+            })
+            .OrderBy(t => t.StudentCode)
+            .ToListAsync();
+
+        return Ok(tuitions);
+    }
+
+    // GET: api/Tuitions/my-payments
+    [HttpGet("my-payments")]
+    [Authorize(Roles = "STUDENT")]
+    public async Task<ActionResult<IEnumerable<object>>> GetMyPayments()
+    {
+        var studentId = User.FindFirst("studentId")?.Value;
+        if (string.IsNullOrEmpty(studentId))
+            return Unauthorized();
+
+        var payments = await _context.TuitionPayments
+            .Include(p => p.Tuition)
+                .ThenInclude(t => t.Semester)
+            .Where(p => p.StudentId == studentId)
+            .Select(p => new
+            {
+                p.PaymentId,
+                p.TuitionId,
+                p.AmountSubmitted,
+                p.PaymentDate,
+                p.EvidenceFile,
+                p.Status,
+                p.ReviewNote,
+                SemesterName = p.Tuition.Semester != null ? p.Tuition.Semester.SemesterName : "N/A"
+            })
+            .OrderByDescending(p => p.PaymentDate)
+            .ToListAsync();
+
+        return Ok(payments);
+    }
+
+
 
     // PUT: api/Tuitions/payment/{paymentId}/confirm
     [HttpPut("payment/{paymentId}/confirm")]
@@ -326,6 +401,125 @@ public class TuitionsController : ControllerBase
         });
     }
 
+    // Thêm method để tính học phí cho sinh viên trong học kỳ
+    [HttpPost("calculate/{studentId}/{semesterId}")]
+    [Authorize(Roles = "ADMIN")]
+    public async Task<IActionResult> CalculateTuition(string studentId, string semesterId)
+    {
+        using var transaction = await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            // Lấy cấu hình giá mỗi tín chỉ
+            var pricePerCreditStr = await _context.SystemConfigs
+                .Where(c => c.ConfigKey == "Tuition_PricePerCredit")
+                .Select(c => c.ConfigValue)
+                .FirstOrDefaultAsync() ?? "300000";
+
+            var pricePerCredit = decimal.Parse(pricePerCreditStr);
+
+            // Lấy danh sách môn đã đăng ký và được duyệt
+            var registrations = await _context.CourseRegistrations
+                .Include(r => r.Class)
+                    .ThenInclude(c => c.Subject)
+                .Where(r => r.StudentId == studentId
+                         && r.Class.SemesterId == semesterId
+                         && r.Status == "APPROVED")
+                .ToListAsync();
+
+            var totalCredits = registrations.Sum(r => r.Class.Subject.Credits);
+            var totalAmount = totalCredits * pricePerCredit;
+
+            // Kiểm tra đã có học phí chưa
+            var existingTuition = await _context.Tuitions
+                .FirstOrDefaultAsync(t => t.StudentId == studentId && t.SemesterId == semesterId);
+
+            if (existingTuition != null)
+            {
+                existingTuition.Amount = totalAmount;
+                existingTuition.UpdatedAt = DateTime.UtcNow;
+                _context.Tuitions.Update(existingTuition);
+            }
+            else
+            {
+                var tuition = new Tuition
+                {
+                    StudentId = studentId,
+                    SemesterId = semesterId,
+                    FeeType = "TUITION",
+                    Amount = totalAmount,
+                    AmountPaid = 0,
+                    DueDate = DateOnly.FromDateTime(DateTime.Now.AddDays(30)),
+                    Status = "UNPAID",
+                    CreatedAt = DateTime.UtcNow,
+                    Notes = $"Học phí học kỳ {semesterId} - {totalCredits} tín chỉ x {pricePerCredit:N0}đ/tín"
+                };
+                _context.Tuitions.Add(tuition);
+            }
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return Ok(new
+            {
+                totalCredits,
+                totalAmount,
+                pricePerCredit,
+                message = "Tính học phí thành công"
+            });
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            return StatusCode(500, new { message = "Lỗi khi tính học phí", error = ex.Message });
+        }
+    }
+
+    // Thêm method để tính học phí cho tất cả sinh viên trong học kỳ
+    [HttpPost("calculate-batch/{semesterId}")]
+    [Authorize(Roles = "ADMIN")]
+    public async Task<IActionResult> CalculateTuitionForAllStudents(string semesterId)
+    {
+        var students = await _context.Students
+            .Select(s => s.StudentId)
+            .ToListAsync();
+
+        int successCount = 0;
+        int errorCount = 0;
+        var errors = new List<string>();
+
+        foreach (var studentId in students)
+        {
+            try
+            {
+                // Gọi API tính học phí cho từng sinh viên
+                var result = await CalculateTuition(studentId, semesterId);
+                if (result is OkResult || (result as OkObjectResult)?.StatusCode == 200)
+                {
+                    successCount++;
+                }
+                else
+                {
+                    errorCount++;
+                    errors.Add(studentId);
+                }
+            }
+            catch
+            {
+                errorCount++;
+                errors.Add(studentId);
+            }
+        }
+
+        return Ok(new
+        {
+            totalStudents = students.Count,
+            successCount,
+            errorCount,
+            errors
+        });
+    }
+
     // PUT: api/Tuitions/{id}
     [HttpPut("{id}")]
     [Authorize(Roles = "ADMIN")]
@@ -352,6 +546,40 @@ public class TuitionsController : ControllerBase
         await _context.SaveChangesAsync();
 
         return Ok(new { message = "Cập nhật học phí thành công" });
+    }
+
+    // GET: api/Tuitions/payments/history
+    [HttpGet("payments/history")]
+    [Authorize(Roles = "ADMIN")]
+    public async Task<ActionResult<IEnumerable<object>>> GetPaymentHistory()
+    {
+        var payments = await _context.TuitionPayments
+            .Include(p => p.Tuition)
+                .ThenInclude(t => t.Semester)
+            .Include(p => p.Student)
+                .ThenInclude(s => s.Account)
+            .OrderByDescending(p => p.PaymentDate)
+            .Select(p => new
+            {
+                p.PaymentId,
+                p.TuitionId,
+                StudentCode = p.Student != null ? p.Student.StudentCode : "N/A",
+                StudentName = p.Student != null && p.Student.Account != null
+                    ? p.Student.Account.FullName
+                    : "N/A",
+                SemesterName = p.Tuition.Semester != null
+                    ? p.Tuition.Semester.SemesterName
+                    : "N/A",
+                p.AmountSubmitted,
+                p.PaymentDate,
+                p.Status,
+                p.ReviewNote,
+                p.ReviewedAt,
+                p.ReviewedBy
+            })
+            .ToListAsync();
+
+        return Ok(payments);
     }
 
     // DELETE: api/Tuitions/{id}

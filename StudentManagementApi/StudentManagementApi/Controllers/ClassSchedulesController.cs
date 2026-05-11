@@ -16,9 +16,27 @@ public class ClassSchedulesController : ControllerBase
 
     // GET: api/ClassSchedules
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ClassSchedule>>> GetClassSchedules()
+    public async Task<ActionResult<IEnumerable<object>>> GetClassSchedules()
     {
-        return await _context.ClassSchedules.ToListAsync();
+        var schedules = await _context.ClassSchedules
+            .OrderBy(s => s.DayOfWeek)
+            .ThenBy(s => s.PeriodStart)
+            .Select(s => new
+            {
+                s.ScheduleId,
+                s.DayOfWeek,
+                s.PeriodStart,
+                s.PeriodEnd,
+                Room = s.RoomId.HasValue
+                    ? _context.Set<Room>()
+                        .Where(r => r.RoomId == s.RoomId.Value)
+                        .Select(r => r.RoomCode + " - " + r.RoomName)
+                        .FirstOrDefault() ?? s.Room
+                    : s.Room
+            })
+            .ToListAsync();
+
+        return Ok(schedules);
     }
 
     // GET: api/ClassSchedules/1

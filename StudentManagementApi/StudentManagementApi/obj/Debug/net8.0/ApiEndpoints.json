@@ -271,18 +271,14 @@
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
-    "Parameters": [],
-    "ReturnTypes": [
+    "Parameters": [
       {
-        "Type": "System.Collections.Generic.IEnumerable\u00601[[StudentManagementApi.Models.Advisor, StudentManagementApi, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
+        "Name": "accountId",
+        "Type": "System.String",
+        "IsRequired": false
       }
-    ]
+    ],
+    "ReturnTypes": []
   },
   {
     "ContainingType": "AdvisorsController",
@@ -324,17 +320,7 @@
         "IsRequired": true
       }
     ],
-    "ReturnTypes": [
-      {
-        "Type": "StudentManagementApi.Models.Advisor",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
+    "ReturnTypes": []
   },
   {
     "ContainingType": "AdvisorsController",
@@ -375,6 +361,22 @@
   },
   {
     "ContainingType": "AdvisorsController",
+    "Method": "GetAdvisorByAccountId",
+    "RelativePath": "api/Advisors/by-account/{accountId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "accountId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "AdvisorsController",
     "Method": "GetStudentStatsForClass",
     "RelativePath": "api/Advisors/student-stats/{advisorClassId}",
     "HttpMethod": "GET",
@@ -390,7 +392,7 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "AttendancesController",
+    "ContainingType": "StudentManagementApi.Controllers.AttendancesController",
     "Method": "GetAttendances",
     "RelativePath": "api/Attendances",
     "HttpMethod": "GET",
@@ -399,7 +401,7 @@
     "Parameters": [],
     "ReturnTypes": [
       {
-        "Type": "System.Collections.Generic.IEnumerable\u00601[[AttendanceResponseDto, StudentManagementApi, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[StudentManagementApi.Controllers.AttendanceResponseDto, StudentManagementApi, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
         "MediaTypes": [
           "text/plain",
           "application/json",
@@ -410,7 +412,7 @@
     ]
   },
   {
-    "ContainingType": "AttendancesController",
+    "ContainingType": "StudentManagementApi.Controllers.AttendancesController",
     "Method": "PostAttendance",
     "RelativePath": "api/Attendances",
     "HttpMethod": "POST",
@@ -436,23 +438,7 @@
     ]
   },
   {
-    "ContainingType": "AttendancesController",
-    "Method": "GetStudentsInMyClass",
-    "RelativePath": "api/Attendances/{classId}/students",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "classId",
-        "Type": "System.String",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "AttendancesController",
+    "ContainingType": "StudentManagementApi.Controllers.AttendancesController",
     "Method": "GetAttendance",
     "RelativePath": "api/Attendances/{id}",
     "HttpMethod": "GET",
@@ -467,7 +453,7 @@
     ],
     "ReturnTypes": [
       {
-        "Type": "AttendanceResponseDto",
+        "Type": "StudentManagementApi.Controllers.AttendanceResponseDto",
         "MediaTypes": [
           "text/plain",
           "application/json",
@@ -478,7 +464,7 @@
     ]
   },
   {
-    "ContainingType": "AttendancesController",
+    "ContainingType": "StudentManagementApi.Controllers.AttendancesController",
     "Method": "PutAttendance",
     "RelativePath": "api/Attendances/{id}",
     "HttpMethod": "PUT",
@@ -499,7 +485,7 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "AttendancesController",
+    "ContainingType": "StudentManagementApi.Controllers.AttendancesController",
     "Method": "DeleteAttendance",
     "RelativePath": "api/Attendances/{id}",
     "HttpMethod": "DELETE",
@@ -512,6 +498,89 @@
         "IsRequired": true
       }
     ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudentManagementApi.Controllers.AttendancesController",
+    "Method": "BulkAttendance",
+    "RelativePath": "api/Attendances/bulk",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "StudentManagementApi.Controllers.BulkAttendanceRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudentManagementApi.Controllers.AttendancesController",
+    "Method": "GetByClass",
+    "RelativePath": "api/Attendances/class/{classId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "classId",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "date",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[StudentManagementApi.Controllers.AttendanceResponseDto, StudentManagementApi, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "StudentManagementApi.Controllers.AttendancesController",
+    "Method": "GetHistory",
+    "RelativePath": "api/Attendances/history/{classId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "classId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[StudentManagementApi.Controllers.AttendanceHistoryDto, StudentManagementApi, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "StudentManagementApi.Controllers.AttendancesController",
+    "Method": "GetStatusValues",
+    "RelativePath": "api/Attendances/status-values",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
     "ReturnTypes": []
   },
   {
@@ -728,6 +797,32 @@
     ]
   },
   {
+    "ContainingType": "ClassesController",
+    "Method": "GetMyClassesBySemester",
+    "RelativePath": "api/Classes/my-classes/semester/{semesterId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "semesterId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[System.Object, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
     "ContainingType": "StudentManagementApi.Controllers.ClassScheduleManagementController",
     "Method": "CheckScheduleConflict",
     "RelativePath": "api/ClassScheduleManagement/check-conflict",
@@ -852,7 +947,7 @@
     "Parameters": [],
     "ReturnTypes": [
       {
-        "Type": "System.Collections.Generic.IEnumerable\u00601[[StudentManagementApi.Models.ClassSchedule, StudentManagementApi, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[System.Object, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
         "MediaTypes": [
           "text/plain",
           "application/json",
@@ -1071,6 +1166,37 @@
       }
     ],
     "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CourseRegistrationsController",
+    "Method": "CheckEligibility",
+    "RelativePath": "api/CourseRegistrations/check-eligibility/{studentId}/{classId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "studentId",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "classId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "CourseRegistrationsController\u002BEligibilityResultDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
   },
   {
     "ContainingType": "CourseRegistrationsController",
@@ -1397,7 +1523,7 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "GpasController",
+    "ContainingType": "StudentManagementApi.Controllers.GpasController",
     "Method": "GetGpas",
     "RelativePath": "api/Gpas",
     "HttpMethod": "GET",
@@ -1406,7 +1532,7 @@
     "Parameters": [],
     "ReturnTypes": [
       {
-        "Type": "System.Collections.Generic.IEnumerable\u00601[[StudentManagementApi.Models.Gpa, StudentManagementApi, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[System.Object, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
         "MediaTypes": [
           "text/plain",
           "application/json",
@@ -1417,7 +1543,7 @@
     ]
   },
   {
-    "ContainingType": "GpasController",
+    "ContainingType": "StudentManagementApi.Controllers.GpasController",
     "Method": "PostGpa",
     "RelativePath": "api/Gpas",
     "HttpMethod": "POST",
@@ -1443,7 +1569,7 @@
     ]
   },
   {
-    "ContainingType": "GpasController",
+    "ContainingType": "StudentManagementApi.Controllers.GpasController",
     "Method": "GetGpa",
     "RelativePath": "api/Gpas/{id}",
     "HttpMethod": "GET",
@@ -1456,20 +1582,10 @@
         "IsRequired": true
       }
     ],
-    "ReturnTypes": [
-      {
-        "Type": "StudentManagementApi.Models.Gpa",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
+    "ReturnTypes": []
   },
   {
-    "ContainingType": "GpasController",
+    "ContainingType": "StudentManagementApi.Controllers.GpasController",
     "Method": "PutGpa",
     "RelativePath": "api/Gpas/{id}",
     "HttpMethod": "PUT",
@@ -1490,7 +1606,7 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "GpasController",
+    "ContainingType": "StudentManagementApi.Controllers.GpasController",
     "Method": "DeleteGpa",
     "RelativePath": "api/Gpas/{id}",
     "HttpMethod": "DELETE",
@@ -1506,10 +1622,26 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "GpasController",
+    "ContainingType": "StudentManagementApi.Controllers.GpasController",
+    "Method": "CalculateAllGpaForStudent",
+    "RelativePath": "api/Gpas/calculate-all/{studentId}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "studentId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudentManagementApi.Controllers.GpasController",
     "Method": "CalculateGpa",
     "RelativePath": "api/Gpas/calculate/{studentId}/{semesterId}",
-    "HttpMethod": "GET",
+    "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
     "Parameters": [
@@ -1524,9 +1656,35 @@
         "IsRequired": true
       }
     ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudentManagementApi.Controllers.GpasController",
+    "Method": "DebugGpas",
+    "RelativePath": "api/Gpas/debug",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudentManagementApi.Controllers.GpasController",
+    "Method": "GetRealTimeGpa",
+    "RelativePath": "api/Gpas/real-time/{studentId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "studentId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
     "ReturnTypes": [
       {
-        "Type": "StudentManagementApi.Models.Gpa",
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[System.Object, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
         "MediaTypes": [
           "text/plain",
           "application/json",
@@ -1537,7 +1695,7 @@
     ]
   },
   {
-    "ContainingType": "GpasController",
+    "ContainingType": "StudentManagementApi.Controllers.GpasController",
     "Method": "GetGpasByStudent",
     "RelativePath": "api/Gpas/student/{studentId}",
     "HttpMethod": "GET",
@@ -1563,132 +1721,7 @@
     ]
   },
   {
-    "ContainingType": "GradesController",
-    "Method": "GetGrades",
-    "RelativePath": "api/Grades",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [],
-    "ReturnTypes": [
-      {
-        "Type": "System.Collections.Generic.IEnumerable\u00601[[StudentManagementApi.Models.Grade, StudentManagementApi, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
-  },
-  {
-    "ContainingType": "GradesController",
-    "Method": "PostGrade",
-    "RelativePath": "api/Grades",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "grade",
-        "Type": "StudentManagementApi.Models.Grade",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": [
-      {
-        "Type": "StudentManagementApi.Models.Grade",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
-  },
-  {
-    "ContainingType": "GradesController",
-    "Method": "GetStudentsInMyClass",
-    "RelativePath": "api/Grades/{classId}/students",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "classId",
-        "Type": "System.String",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "GradesController",
-    "Method": "GetGrade",
-    "RelativePath": "api/Grades/{id}",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Int32",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": [
-      {
-        "Type": "StudentManagementApi.Models.Grade",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
-  },
-  {
-    "ContainingType": "GradesController",
-    "Method": "PutGrade",
-    "RelativePath": "api/Grades/{id}",
-    "HttpMethod": "PUT",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Int32",
-        "IsRequired": true
-      },
-      {
-        "Name": "grade",
-        "Type": "StudentManagementApi.Models.Grade",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "GradesController",
-    "Method": "DeleteGrade",
-    "RelativePath": "api/Grades/{id}",
-    "HttpMethod": "DELETE",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Int32",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "GradesController",
+    "ContainingType": "StudentManagementApi.Controllers.GradesController",
     "Method": "ApproveGrades",
     "RelativePath": "api/Grades/approve",
     "HttpMethod": "POST",
@@ -1697,15 +1730,15 @@
     "Parameters": [
       {
         "Name": "dto",
-        "Type": "GradesController\u002BGradeApprovalDto",
+        "Type": "StudentManagementApi.Controllers.SubmitGradeDto",
         "IsRequired": true
       }
     ],
     "ReturnTypes": []
   },
   {
-    "ContainingType": "GradesController",
-    "Method": "BulkCreateOrUpdateGrades",
+    "ContainingType": "StudentManagementApi.Controllers.GradesController",
+    "Method": "BulkSave",
     "RelativePath": "api/Grades/bulk",
     "HttpMethod": "POST",
     "IsController": true,
@@ -1713,14 +1746,14 @@
     "Parameters": [
       {
         "Name": "dto",
-        "Type": "GradesController\u002BBulkGradeDto",
+        "Type": "StudentManagementApi.Controllers.BulkGradeDto",
         "IsRequired": true
       }
     ],
     "ReturnTypes": []
   },
   {
-    "ContainingType": "GradesController",
+    "ContainingType": "StudentManagementApi.Controllers.GradesController",
     "Method": "GetGradesByClass",
     "RelativePath": "api/Grades/class/{classId}",
     "HttpMethod": "GET",
@@ -1746,7 +1779,33 @@
     ]
   },
   {
-    "ContainingType": "GradesController",
+    "ContainingType": "StudentManagementApi.Controllers.GradesController",
+    "Method": "GetPendingGrades",
+    "RelativePath": "api/Grades/pending/{classId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "classId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[System.Object, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "StudentManagementApi.Controllers.GradesController",
     "Method": "RejectGrades",
     "RelativePath": "api/Grades/reject",
     "HttpMethod": "POST",
@@ -1755,14 +1814,14 @@
     "Parameters": [
       {
         "Name": "dto",
-        "Type": "GradesController\u002BGradeApprovalDto",
+        "Type": "StudentManagementApi.Controllers.SubmitGradeDto",
         "IsRequired": true
       }
     ],
     "ReturnTypes": []
   },
   {
-    "ContainingType": "GradesController",
+    "ContainingType": "StudentManagementApi.Controllers.GradesController",
     "Method": "GetGradesByStudent",
     "RelativePath": "api/Grades/student/{studentId}",
     "HttpMethod": "GET",
@@ -1788,16 +1847,16 @@
     ]
   },
   {
-    "ContainingType": "GradesController",
+    "ContainingType": "StudentManagementApi.Controllers.GradesController",
     "Method": "SubmitForApproval",
-    "RelativePath": "api/Grades/submit-for-approval",
+    "RelativePath": "api/Grades/submit",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
         "Name": "dto",
-        "Type": "GradesController\u002BSubmitApprovalDto",
+        "Type": "StudentManagementApi.Controllers.SubmitGradeDto",
         "IsRequired": true
       }
     ],
@@ -2009,6 +2068,16 @@
   },
   {
     "ContainingType": "GraduationRequestsController",
+    "Method": "CheckEligibility",
+    "RelativePath": "api/GraduationRequests/check-eligibility",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GraduationRequestsController",
     "Method": "GetMyGraduationRequests",
     "RelativePath": "api/GraduationRequests/my",
     "HttpMethod": "GET",
@@ -2097,6 +2166,26 @@
   },
   {
     "ContainingType": "NotificationsController",
+    "Method": "GetAdvisorClassesForNotification",
+    "RelativePath": "api/Notifications/classes",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[System.Object, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "NotificationsController",
     "Method": "MarkAllAsRead",
     "RelativePath": "api/Notifications/mark-all-read",
     "HttpMethod": "PUT",
@@ -2104,6 +2193,37 @@
     "Order": 0,
     "Parameters": [],
     "ReturnTypes": []
+  },
+  {
+    "ContainingType": "NotificationsController",
+    "Method": "GetSentNotifications",
+    "RelativePath": "api/Notifications/sent",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "page",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "pageSize",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[System.Object, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
   },
   {
     "ContainingType": "NotificationsController",
@@ -2553,12 +2673,34 @@
   },
   {
     "ContainingType": "StudentManagementApi.Controllers.SemesterManagementController",
-    "Method": "GetCurrentSemester",
-    "RelativePath": "api/SemesterManagement/current",
+    "Method": "CancelLowEnrollmentClasses",
+    "RelativePath": "api/SemesterManagement/cancel-low-enrollment/{semesterId}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "semesterId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudentManagementApi.Controllers.SemesterManagementController",
+    "Method": "GetLowEnrollmentClasses",
+    "RelativePath": "api/SemesterManagement/check-low-enrollment/{semesterId}",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
-    "Parameters": [],
+    "Parameters": [
+      {
+        "Name": "semesterId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
     "ReturnTypes": []
   },
   {
@@ -2787,24 +2929,36 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "SemestersController",
+    "Method": "CheckRegistrationStatus",
+    "RelativePath": "api/Semesters/check-registration-status/{semesterId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "semesterId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "StudentsController",
     "Method": "GetStudents",
     "RelativePath": "api/Students",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
-    "Parameters": [],
-    "ReturnTypes": [
+    "Parameters": [
       {
-        "Type": "System.Collections.Generic.IEnumerable\u00601[[StudentManagementApi.Models.Student, StudentManagementApi, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
+        "Name": "accountId",
+        "Type": "System.String",
+        "IsRequired": false
       }
-    ]
+    ],
+    "ReturnTypes": []
   },
   {
     "ContainingType": "StudentsController",
@@ -2846,17 +3000,7 @@
         "IsRequired": true
       }
     ],
-    "ReturnTypes": [
-      {
-        "Type": "StudentManagementApi.Models.Student",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
+    "ReturnTypes": []
   },
   {
     "ContainingType": "StudentsController",
@@ -2897,6 +3041,48 @@
   },
   {
     "ContainingType": "StudentsController",
+    "Method": "GetStudentAdvisor",
+    "RelativePath": "api/Students/{studentId}/advisor",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "studentId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudentsController",
+    "Method": "GetAcademicSummary",
+    "RelativePath": "api/Students/academic-summary",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "includeDetails",
+        "Type": "System.Boolean",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "StudentManagementApi.DTOs.AcademicSummaryDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "StudentsController",
     "Method": "GetStudentsByAdvisor",
     "RelativePath": "api/Students/advisor-class/{advisorId}",
     "HttpMethod": "GET",
@@ -2923,6 +3109,22 @@
   },
   {
     "ContainingType": "StudentsController",
+    "Method": "GetStudentByAccountId",
+    "RelativePath": "api/Students/by-account/{accountId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "accountId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudentsController",
     "Method": "GetStudentsByAdvisorClass",
     "RelativePath": "api/Students/by-advisor-class/{advisorClassId}",
     "HttpMethod": "GET",
@@ -2938,6 +3140,62 @@
     "ReturnTypes": [
       {
         "Type": "System.Collections.Generic.IEnumerable\u00601[[System.Object, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "StudentsController",
+    "Method": "GetGraduationEligibility",
+    "RelativePath": "api/Students/graduation-eligibility",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "StudentManagementApi.Services.GraduationEligibilityDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "StudentsController",
+    "Method": "GetMyProgramProgress",
+    "RelativePath": "api/Students/my-program-progress",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudentsController",
+    "Method": "RecalculateGpa",
+    "RelativePath": "api/Students/recalculate-gpa/{studentId}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "studentId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "StudentManagementApi.Services.RecalculationResultDto",
         "MediaTypes": [
           "text/plain",
           "application/json",
@@ -3146,6 +3404,94 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "StudentManagementApi.Controllers.SystemConfigsController",
+    "Method": "GetCreditLimits",
+    "RelativePath": "api/SystemConfigs/credit-limits",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudentManagementApi.Controllers.SystemConfigsController",
+    "Method": "UpdateCreditLimits",
+    "RelativePath": "api/SystemConfigs/credit-limits",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "StudentManagementApi.Controllers.SystemConfigsController\u002BCreditLimitsDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudentManagementApi.Controllers.SystemConfigsController",
+    "Method": "GetPaymentConfig",
+    "RelativePath": "api/SystemConfigs/payment-config",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudentManagementApi.Controllers.SystemConfigsController",
+    "Method": "UpdatePaymentConfig",
+    "RelativePath": "api/SystemConfigs/payment-config",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "StudentManagementApi.Controllers.SystemConfigsController\u002BPaymentConfigDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudentManagementApi.Controllers.SystemConfigsController",
+    "Method": "GetPublicPaymentConfig",
+    "RelativePath": "api/SystemConfigs/payment-config/public",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudentManagementApi.Controllers.SystemConfigsController",
+    "Method": "GetTuitionConfig",
+    "RelativePath": "api/SystemConfigs/tuition-config",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudentManagementApi.Controllers.SystemConfigsController",
+    "Method": "UpdateTuitionConfig",
+    "RelativePath": "api/SystemConfigs/tuition-config",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "StudentManagementApi.Controllers.SystemConfigsController\u002BTuitionConfigDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "TeachersController",
     "Method": "GetTeachers",
     "RelativePath": "api/Teachers",
@@ -3195,17 +3541,7 @@
         "IsRequired": true
       }
     ],
-    "ReturnTypes": [
-      {
-        "Type": "StudentManagementApi.Models.Teacher",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
+    "ReturnTypes": []
   },
   {
     "ContainingType": "TeachersController",
@@ -3245,6 +3581,22 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "TeachersController",
+    "Method": "GetTeacherByAccountId",
+    "RelativePath": "api/Teachers/by-account/{accountId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "accountId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "TestController",
     "Method": "GetStudents",
     "RelativePath": "api/Test/students",
@@ -3253,6 +3605,32 @@
     "Order": 0,
     "Parameters": [],
     "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TuitionsController",
+    "Method": "GetTuitions",
+    "RelativePath": "api/Tuitions",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "semesterId",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[System.Object, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
   },
   {
     "ContainingType": "TuitionsController",
@@ -3309,6 +3687,43 @@
   },
   {
     "ContainingType": "TuitionsController",
+    "Method": "CalculateTuitionForAllStudents",
+    "RelativePath": "api/Tuitions/calculate-batch/{semesterId}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "semesterId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TuitionsController",
+    "Method": "CalculateTuition",
+    "RelativePath": "api/Tuitions/calculate/{studentId}/{semesterId}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "studentId",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "semesterId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TuitionsController",
     "Method": "CreateTuitionBatch",
     "RelativePath": "api/Tuitions/create-batch",
     "HttpMethod": "POST",
@@ -3342,6 +3757,26 @@
         "IsRequired": false
       }
     ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[System.Object, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "TuitionsController",
+    "Method": "GetMyPayments",
+    "RelativePath": "api/Tuitions/my-payments",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
     "ReturnTypes": [
       {
         "Type": "System.Collections.Generic.IEnumerable\u00601[[System.Object, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
@@ -3390,6 +3825,26 @@
       }
     ],
     "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TuitionsController",
+    "Method": "GetPaymentHistory",
+    "RelativePath": "api/Tuitions/payments/history",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[System.Object, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
   },
   {
     "ContainingType": "TuitionsController",
@@ -3561,6 +4016,26 @@
       }
     ],
     "ReturnTypes": []
+  },
+  {
+    "ContainingType": "WarningsController",
+    "Method": "GetMyWarnings",
+    "RelativePath": "api/Warnings/my-warnings",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[System.Object, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
   },
   {
     "ContainingType": "StudentManagementApi.Controllers.WeatherForecastController",

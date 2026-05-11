@@ -8,7 +8,9 @@ D:\StudentManagementApi\StudentManagementApi\bin\Debug\net8.0\StudentManagementA
 D:\StudentManagementApi\StudentManagementApi\bin\Debug\net8.0\StudentManagementApi.pdb
 D:\StudentManagementApi\StudentManagementApi\bin\Debug\net8.0\Azure.Core.dll
 D:\StudentManagementApi\StudentManagementApi\bin\Debug\net8.0\Azure.Identity.dll
+D:\StudentManagementApi\StudentManagementApi\bin\Debug\net8.0\BCrypt.Net-Next.dll
 D:\StudentManagementApi\StudentManagementApi\bin\Debug\net8.0\Humanizer.dll
+D:\StudentManagementApi\StudentManagementApi\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
 D:\StudentManagementApi\StudentManagementApi\bin\Debug\net8.0\Microsoft.Bcl.AsyncInterfaces.dll
 D:\StudentManagementApi\StudentManagementApi\bin\Debug\net8.0\Microsoft.CodeAnalysis.dll
 D:\StudentManagementApi\StudentManagementApi\bin\Debug\net8.0\Microsoft.CodeAnalysis.CSharp.dll
@@ -137,12 +139,10 @@ D:\StudentManagementApi\StudentManagementApi\obj\Debug\net8.0\staticwebassets.bu
 D:\StudentManagementApi\StudentManagementApi\obj\Debug\net8.0\staticwebassets.build.json.cache
 D:\StudentManagementApi\StudentManagementApi\obj\Debug\net8.0\staticwebassets.development.json
 D:\StudentManagementApi\StudentManagementApi\obj\Debug\net8.0\staticwebassets.build.endpoints.json
+D:\StudentManagementApi\StudentManagementApi\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 D:\StudentManagementApi\StudentManagementApi\obj\Debug\net8.0\StudentM.F9ABE403.Up2Date
 D:\StudentManagementApi\StudentManagementApi\obj\Debug\net8.0\StudentManagementApi.dll
 D:\StudentManagementApi\StudentManagementApi\obj\Debug\net8.0\refint\StudentManagementApi.dll
 D:\StudentManagementApi\StudentManagementApi\obj\Debug\net8.0\StudentManagementApi.pdb
 D:\StudentManagementApi\StudentManagementApi\obj\Debug\net8.0\StudentManagementApi.genruntimeconfig.cache
 D:\StudentManagementApi\StudentManagementApi\obj\Debug\net8.0\ref\StudentManagementApi.dll
-D:\StudentManagementApi\StudentManagementApi\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
-D:\StudentManagementApi\StudentManagementApi\bin\Debug\net8.0\BCrypt.Net-Next.dll
-D:\StudentManagementApi\StudentManagementApi\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

@@ -23,5 +23,4 @@ public partial class Room
 
     public DateTime CreatedAt { get; set; }
 
-    public virtual ICollection<ClassSchedule> ClassSchedules { get; set; } = new List<ClassSchedule>();
 }

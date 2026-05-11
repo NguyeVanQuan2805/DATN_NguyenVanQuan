@@ -40,6 +40,24 @@ public class SemestersController : ControllerBase
         return semester;
     }
 
+    // GET: api/Semesters/check-registration-status/{semesterId}
+    [HttpGet("check-registration-status/{semesterId}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> CheckRegistrationStatus(string semesterId)
+    {
+        var semester = await _context.Semesters
+            .FirstOrDefaultAsync(s => s.SemesterId == semesterId);
+
+        if (semester == null)
+            return NotFound(new { message = "Không tìm thấy học kỳ" });
+
+        return Ok(new
+        {
+            isRegistrationOpen = semester.IsRegistrationOpen ?? false,
+            semesterName = semester.SemesterName
+        });
+    }
+
     // POST: api/Semesters
     [HttpPost]
     [Authorize(Roles = "ADMIN")]

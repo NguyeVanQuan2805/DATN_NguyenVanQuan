@@ -14,7 +14,6 @@ public class ClassesController : ControllerBase
         _context = context;
     }
 
-    // GET: api/Classes 
     // GET: api/Classes
     [HttpGet]
     public async Task<ActionResult<IEnumerable<object>>> GetClasses()
@@ -22,7 +21,7 @@ public class ClassesController : ControllerBase
         var classes = await _context.Classes
             .Include(c => c.Subject)
             .Include(c => c.Teacher)!
-                .ThenInclude(t => t!.Account)   // ! để báo compiler biết không null
+                .ThenInclude(t => t!.Account)   
             .Include(c => c.Semester)
             .Include(c => c.Schedule)
             .Select(c => new
@@ -143,7 +142,7 @@ public class ClassesController : ControllerBase
         }
 
         // TỰ ĐỘNG SINH ClassId
-        string classId = $"C-{Guid.NewGuid().ToString("N").Substring(0, 8)}"; // VD: C-abc12345
+        string classId = $"C-{Guid.NewGuid().ToString("N").Substring(0, 8)}"; 
 
         var cls = new Class
         {
@@ -187,7 +186,6 @@ public class ClassesController : ControllerBase
         return NoContent();
     }
 
-    // DELETE: api/Classes/{id}
     [HttpDelete("{id}")]
     [Authorize(Roles = "ADMIN")]
     public async Task<IActionResult> DeleteClass(string id)
@@ -198,12 +196,36 @@ public class ClassesController : ControllerBase
 
         if (cls == null) return NotFound();
 
-        if (cls.CurrentStudents > 0 || cls.CourseRegistrations.Any())
-            return BadRequest("Không thể xóa lớp học phần đã có sinh viên đăng ký!");
+        // Chỉ không cho xóa nếu lớp ĐANG MỞ và có sinh viên đã đăng ký ĐƯỢC DUYỆT
+        if (cls.Status == "OPEN" && cls.CurrentStudents > 0)
+        {
+            return BadRequest(new
+            {
+                message = $"Không thể xóa lớp đang mở đăng ký và có {cls.CurrentStudents} sinh viên. Vui lòng hủy lớp trước."
+            });
+        }
+
+        // Cho phép xóa lớp CANCELLED (đã hủy) - không cần kiểm tra CourseRegistrations 
+        // hoặc lớp CLOSED không có sinh viên
+        if (cls.Status != "CANCELLED" && cls.CurrentStudents > 0)
+        {
+            return BadRequest(new
+            {
+                message = "Không thể xóa lớp đã có sinh viên đăng ký được duyệt. Vui lòng hủy lớp trước."
+            });
+        }
+
+        // Nếu là lớp CANCELLED, có thể xóa tất cả các đăng ký liên quan trước
+        if (cls.Status == "CANCELLED")
+        {
+            // Xóa tất cả đăng ký của lớp này (tùy chọn)
+            _context.CourseRegistrations.RemoveRange(cls.CourseRegistrations);
+        }
 
         _context.Classes.Remove(cls);
         await _context.SaveChangesAsync();
-        return NoContent();
+
+        return Ok(new { message = $"Đã xóa lớp {cls.ClassCode} thành công" });
     }
 
     [HttpGet("available-for-student/{studentId}")]
@@ -266,6 +288,88 @@ string studentId,
     public async Task<ActionResult<IEnumerable<object>>> GetMyClasses()
     {
         var teacherIdClaim = User.FindFirst("teacherId")?.Value;
+
+        Console.WriteLine($"=== DEBUG ===");
+        Console.WriteLine($"TeacherId from claim: {teacherIdClaim}");
+
+        if (string.IsNullOrEmpty(teacherIdClaim))
+        {
+            Console.WriteLine("ERROR: teacherId claim not found!");
+            // Thử lấy từ Account nếu không có trong claim
+            var accountId = User.FindFirst("accountId")?.Value;
+            if (!string.IsNullOrEmpty(accountId))
+            {
+                var teacher = await _context.Teachers
+                    .FirstOrDefaultAsync(t => t.AccountId == accountId);
+                if (teacher != null)
+                {
+                    teacherIdClaim = teacher.TeacherId;
+                    Console.WriteLine($"Found TeacherId from Account: {teacherIdClaim}");
+                }
+            }
+
+            if (string.IsNullOrEmpty(teacherIdClaim))
+                return Unauthorized(new { message = "Không tìm thấy thông tin giảng viên", teacherId = teacherIdClaim });
+        }
+
+        // LẤY TẤT CẢ LỚP, KHÔNG FILTER HỌC KỲ
+        var classes = await _context.Classes
+            .Include(c => c.Subject)
+            .Include(c => c.Teacher)!
+                .ThenInclude(t => t!.Account)
+            .Include(c => c.Semester)
+            .Include(c => c.Schedule)
+            .Where(c => c.TeacherId == teacherIdClaim)
+            // .Where(c => c.SemesterId == "HK2024_2")
+            .Select(c => new
+            {
+                c.ClassId,
+                c.ClassCode,
+                Subject = new
+                {
+                    c.Subject.SubjectId,
+                    c.Subject.SubjectCode,
+                    c.Subject.SubjectName,
+                    c.Subject.Credits
+                },
+                Semester = new
+                {
+                    c.Semester.SemesterId,
+                    c.Semester.SemesterName,
+                    c.Semester.AcademicYear
+                },
+                Schedule = c.Schedule != null ? new
+                {
+                    c.Schedule.DayOfWeek,
+                    c.Schedule.PeriodStart,
+                    c.Schedule.PeriodEnd,
+                    c.Schedule.Room
+                } : null,
+                c.MaxStudents,
+                c.CurrentStudents,
+                c.Status
+            })
+            .OrderByDescending(c => c.Semester.AcademicYear)
+            .ThenByDescending(c => c.ClassCode)
+            .ToListAsync();
+
+        Console.WriteLine($"Found {classes.Count} classes for teacher {teacherIdClaim}");
+
+        // Log chi tiết từng lớp để debug
+        foreach (var cls in classes)
+        {
+            Console.WriteLine($"Class: {cls.ClassCode}, Semester: {cls.Semester.SemesterName}, Status: {cls.Status}");
+        }
+
+        return Ok(classes);
+    }
+
+    [HttpGet("my-classes/semester/{semesterId}")]
+    [Authorize(Roles = "TEACHER")]
+    public async Task<ActionResult<IEnumerable<object>>> GetMyClassesBySemester(string semesterId)
+    {
+        var teacherIdClaim = User.FindFirst("teacherId")?.Value;
+
         if (string.IsNullOrEmpty(teacherIdClaim))
             return Unauthorized("Không tìm thấy thông tin giảng viên");
 
@@ -274,8 +378,7 @@ string studentId,
             .Include(c => c.Teacher)!.ThenInclude(t => t!.Account)
             .Include(c => c.Semester)
             .Include(c => c.Schedule)
-            .Where(c => c.TeacherId == teacherIdClaim
-                     && c.SemesterId == "HK2024_2")
+            .Where(c => c.TeacherId == teacherIdClaim && c.SemesterId == semesterId)
             .Select(c => new
             {
                 c.ClassId,
@@ -361,7 +464,7 @@ string studentId,
         });
     }
 
-    // Trong ClassesController.cs, thêm:
+    // ClassesController.cs, 
 
     [HttpGet("class-registrations/{classId}")]
     [Authorize(Roles = "ADMIN, ADVISOR")]

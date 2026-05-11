@@ -81,6 +81,70 @@ public class NotificationsController : ControllerBase
         return Ok(new { unreadCount = count });
     }
 
+    // GET: api/Notifications/sent
+    [HttpGet("sent")]
+    [Authorize(Roles = "ADMIN")]
+    public async Task<ActionResult<IEnumerable<object>>> GetSentNotifications(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
+    {
+        var senderId = User.FindFirst("accountId")?.Value;
+
+        var query = _context.Set<Notification>()
+            .Where(n => n.SenderId == senderId);
+
+        var total = await query.CountAsync();
+
+        var notifications = await query
+            .OrderByDescending(n => n.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(n => new
+            {
+                n.NotificationId,
+                n.Title,
+                n.Content,
+                n.NotificationType,
+                n.TargetScope,
+                n.TargetClassId,
+                n.SendEmail,
+                n.CreatedAt,
+                n.SentAt,
+                RecipientCount = _context.Set<NotificationRecipient>()
+                    .Count(r => r.NotificationId == n.NotificationId),
+                ReadCount = _context.Set<NotificationRecipient>()
+                    .Count(r => r.NotificationId == n.NotificationId && r.IsRead == true)
+            })
+            .ToListAsync();
+
+        return Ok(new
+        {
+            total,
+            page,
+            pageSize,
+            notifications
+        });
+    }
+
+    // GET: api/Notifications/classes
+    [HttpGet("classes")]
+    [Authorize(Roles = "ADMIN")]
+    public async Task<ActionResult<IEnumerable<object>>> GetAdvisorClassesForNotification()
+    {
+        var classes = await _context.AdvisorClasses
+            .Select(c => new
+            {
+                c.AdvisorClassId,
+                c.ClassCode,
+                c.ClassName,
+                StudentCount = c.Students.Count
+            })
+            .OrderBy(c => c.ClassCode)
+            .ToListAsync();
+
+        return Ok(classes);
+    }
+
     // POST: api/Notifications
     [HttpPost]
     [Authorize(Roles = "ADMIN")]

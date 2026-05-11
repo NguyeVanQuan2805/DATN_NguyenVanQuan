@@ -45,7 +45,7 @@ public class AccountsController : ControllerBase
     {
         var userId = User.FindFirst("sub")?.Value
                   ?? User.FindFirst("nameidentifier")?.Value
-                  ?? User.FindFirst("accountId")?.Value   // ← Thêm fallback cho admin nếu token dùng claim này
+                  ?? User.FindFirst("accountId")?.Value   // Thêm fallback cho admin nếu token dùng claim này
                   ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrEmpty(userId))
@@ -112,14 +112,15 @@ public class AccountsController : ControllerBase
             return BadRequest(ModelState);
 
         // Sinh AccountId tự động
-        string prefix = dto.Role switch
-        {
-            "STUDENT" => "SV",
-            "TEACHER" => "GV",
-            "ADVISOR" => "CV",
-            "ADMIN" => "AD",
-            _ => throw new ArgumentException("Role không hợp lệ")
-        };
+        var prefixMap = new Dictionary<string, string>
+    {
+        { "STUDENT", "SV" },
+        { "TEACHER", "GV" },
+        { "ADVISOR", "CV" },
+        { "ADMIN",   "AD" },
+    };
+        if (!prefixMap.TryGetValue(dto.Role, out var prefix))
+            return BadRequest("Role không hợp lệ");
 
         var lastAccount = await _context.Accounts
             .Where(a => a.AccountId.StartsWith(prefix))
@@ -145,6 +146,8 @@ public class AccountsController : ControllerBase
         if (!string.IsNullOrEmpty(dto.Email) &&
             await _context.Accounts.AnyAsync(a => a.Email == dto.Email))
             return BadRequest("Email đã được sử dụng");
+        if (!string.IsNullOrEmpty(dto.Phone) && dto.Phone.Length > 10)
+            return BadRequest("Số điện thoại không hợp lệ");
 
         var account = new Account
         {
@@ -163,6 +166,116 @@ public class AccountsController : ControllerBase
 
         _context.Accounts.Add(account);
         await _context.SaveChangesAsync();
+
+        if (dto.Role == "TEACHER")
+        {
+            // Tạo TeacherId với prefix GV và số thứ tự
+            var lastTeacher = await _context.Teachers
+                .OrderByDescending(t => t.TeacherId)
+                .Select(t => t.TeacherId)
+                .FirstOrDefaultAsync();
+
+            int teacherNum = 1;
+            if (lastTeacher != null && Regex.Match(lastTeacher, @"\d+$").Success)
+            {
+                teacherNum = int.Parse(Regex.Match(lastTeacher, @"\d+$").Value) + 1;
+            }
+
+            string teacherId = $"TCH{teacherNum:000}"; 
+
+            // Đảm bảo không trùng TeacherId
+            while (await _context.Teachers.AnyAsync(t => t.TeacherId == teacherId))
+            {
+                teacherNum++;
+                teacherId = $"TCH{teacherNum:000}";
+            }
+
+            var teacher = new Teacher
+            {
+                TeacherId = teacherId,
+                AccountId = account.AccountId,
+                DepartmentId = null,  
+                Position = "Giảng viên" 
+            };
+
+            _context.Teachers.Add(teacher);
+            await _context.SaveChangesAsync();
+        }
+        // Nếu role là STUDENT, tự động tạo record trong bảng Student
+        else if (dto.Role == "STUDENT")
+        {
+            // Tìm lớp cố vấn mặc định 
+            var defaultAdvisorClass = await _context.AdvisorClasses
+                .OrderBy(ac => ac.AdvisorClassId)
+                .Select(ac => ac.AdvisorClassId)
+                .FirstOrDefaultAsync();
+
+            // Tạo StudentId với prefix SV và số thứ tự
+            var lastStudent = await _context.Students
+                .OrderByDescending(s => s.StudentId)
+                .Select(s => s.StudentId)
+                .FirstOrDefaultAsync();
+
+            int studentNum = 1;
+            if (lastStudent != null && Regex.Match(lastStudent, @"\d+$").Success)
+            {
+                studentNum = int.Parse(Regex.Match(lastStudent, @"\d+$").Value) + 1;
+            }
+
+            string studentId = $"STU{studentNum:000}";
+
+            while (await _context.Students.AnyAsync(s => s.StudentId == studentId))
+            {
+                studentNum++;
+                studentId = $"STU{studentNum:000}";
+            }
+
+            var student = new Student
+            {
+                StudentId = studentId,
+                StudentCode = $"SV{DateTime.Now.Year}{studentNum:000}", // Mã sinh viên: SV2024001
+                AccountId = account.AccountId,
+                AdvisorClassId = defaultAdvisorClass > 0 ? defaultAdvisorClass : 1, // Gán lớp mặc định
+                Major = "Chưa cập nhật",
+                AdmissionYear = DateTime.Now.Year
+            };
+
+            _context.Students.Add(student);
+            await _context.SaveChangesAsync();
+        }
+        // Nếu role là ADVISOR, tự động tạo record trong bảng Advisor
+        else if (dto.Role == "ADVISOR")
+        {
+            // Tạo AdvisorId với prefix ADV và số thứ tự
+            var lastAdvisor = await _context.Advisors
+                .OrderByDescending(a => a.AdvisorId)
+                .Select(a => a.AdvisorId)
+                .FirstOrDefaultAsync();
+
+            int advisorNum = 1;
+            if (lastAdvisor != null && Regex.Match(lastAdvisor, @"\d+$").Success)
+            {
+                advisorNum = int.Parse(Regex.Match(lastAdvisor, @"\d+$").Value) + 1;
+            }
+
+            string advisorId = $"ADV{advisorNum:000}";
+
+            while (await _context.Advisors.AnyAsync(a => a.AdvisorId == advisorId))
+            {
+                advisorNum++;
+                advisorId = $"ADV{advisorNum:000}";
+            }
+
+            var advisor = new Advisor
+            {
+                AdvisorId = advisorId,
+                AccountId = account.AccountId,
+                DepartmentId = null
+            };
+
+            _context.Advisors.Add(advisor);
+            await _context.SaveChangesAsync();
+        }
 
         return CreatedAtAction(nameof(GetAccount), new { id = account.AccountId }, new
         {
@@ -183,7 +296,6 @@ public class AccountsController : ControllerBase
     [Authorize]
     public async Task<IActionResult> PutAccount(string id, [FromBody] AccountUpdateDto dto)
     {
-        // Tắt validate cho PasswordHash (vì PUT không cập nhật password)
         ModelState.Remove("PasswordHash");
         ModelState.Remove("Username");
         ModelState.Remove("Role");
@@ -268,13 +380,13 @@ public class AccountDto
 
 public class AccountUpdateDto
 {
-    public string? Username { get; set; }           // optional
+    public string? Username { get; set; }           
     public string? FullName { get; set; }
     public string? Email { get; set; }
     public string? Phone { get; set; }
     public string? Gender { get; set; }
     public DateTime? DateOfBirth { get; set; }
-    public string? Role { get; set; }               // optional
+    public string? Role { get; set; }               
     public bool? IsActive { get; set; }
 }
 

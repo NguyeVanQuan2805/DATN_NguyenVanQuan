@@ -106,6 +106,8 @@ namespace StudentManagementApi.Controllers
                         TotalCredits = g.Sum(s => s.Credits),
                         Subjects = g.Select(s => new
                         {
+                            s.SubjectId,          
+                            s.CurriculumSubjectId, 
                             s.SubjectCode,
                             s.SubjectName,
                             s.Credits,

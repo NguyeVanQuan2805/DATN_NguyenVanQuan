@@ -28,6 +28,7 @@ public partial class Semester
 
     public bool? IsRegistrationOpen { get; set; }
 
+
     [InverseProperty("Semester")]
     public virtual ICollection<Class> Classes { get; set; } = new List<Class>();
 
@@ -37,11 +38,9 @@ public partial class Semester
     [InverseProperty("Semester")]
     public virtual ICollection<Warning> Warnings { get; set; } = new List<Warning>();
 
-    // Thêm vào class Semester
     [InverseProperty("Semester")]
     public virtual ICollection<Tuition> Tuitions { get; set; } = new List<Tuition>();
 
-    // Thêm vào class Semester
     [InverseProperty("Semester")]
     public virtual ICollection<GraduationRequest> GraduationRequests { get; set; } = new List<GraduationRequest>();
 }

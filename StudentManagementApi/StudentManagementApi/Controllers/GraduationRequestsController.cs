@@ -38,6 +38,7 @@ public class GraduationRequestsController : ControllerBase
                     ? r.Student.Account.FullName
                     : "N/A",
                 r.SemesterId,
+                SemesterName = r.Semester != null ? r.Semester.SemesterName : "N/A",
                 r.SubmittedAt,
                 r.TotalCreditsEarned,
                 r.CumulativeGpa,
@@ -65,10 +66,12 @@ public class GraduationRequestsController : ControllerBase
 
         var requests = await _context.GraduationRequests
             .Where(r => r.StudentId == studentId)
+            .Include(r => r.Semester)
             .Select(r => new
             {
                 r.RequestId,
                 r.SemesterId,
+                SemesterName = r.Semester != null ? r.Semester.SemesterName : "N/A",
                 r.SubmittedAt,
                 r.TotalCreditsEarned,
                 r.CumulativeGpa,
@@ -93,6 +96,7 @@ public class GraduationRequestsController : ControllerBase
         var request = await _context.GraduationRequests
             .Include(r => r.Student)
                 .ThenInclude(s => s.Account)
+            .Include(r => r.Semester)
             .Where(r => r.RequestId == id)
             .Select(r => new
             {
@@ -103,6 +107,7 @@ public class GraduationRequestsController : ControllerBase
                     ? r.Student.Account.FullName
                     : "N/A",
                 r.SemesterId,
+                SemesterName = r.Semester != null ? r.Semester.SemesterName : "N/A",
                 r.SubmittedAt,
                 r.TotalCreditsEarned,
                 r.CumulativeGpa,
@@ -135,38 +140,118 @@ public class GraduationRequestsController : ControllerBase
     {
         var studentId = User.FindFirst("studentId")?.Value;
         if (string.IsNullOrEmpty(studentId))
-            return Unauthorized();
+            return Unauthorized(new { message = "Không tìm thấy thông tin sinh viên" });
 
-        // Kiểm tra đã có yêu cầu đang chờ duyệt chưa
+        // ========== KIỂM TRA HỌC KỲ HỢP LỆ ==========
+        var semester = await _context.Semesters.FindAsync(dto.SemesterId);
+        if (semester == null)
+            return BadRequest(new { message = "Học kỳ không tồn tại" });
+
+        // 1. Kiểm tra học kỳ có đang mở đăng ký xét tốt nghiệp không
+        if (!semester.IsRegistrationOpen.GetValueOrDefault(false))
+        {
+            return BadRequest(new
+            {
+                message = $"Học kỳ {semester.SemesterName} chưa mở đăng ký xét tốt nghiệp",
+                semesterId = semester.SemesterId
+            });
+        }
+
+        // 2. Kiểm tra học kỳ đã kết thúc chưa (không cho xét học kỳ quá khứ)
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        if (semester.EndDate < today)
+        {
+            return BadRequest(new
+            {
+                message = $"Không thể đăng ký xét tốt nghiệp cho học kỳ đã kết thúc ({semester.SemesterName})",
+                semesterEndDate = semester.EndDate.ToString("dd/MM/yyyy")
+            });
+        }
+
+        // 3. Kiểm tra học kỳ quá xa trong tương lai (tùy chọn, khuyến nghị)
+        if (semester.StartDate > today.AddMonths(6))
+        {
+            return BadRequest(new
+            {
+                message = $"Học kỳ {semester.SemesterName} còn quá xa, vui lòng chọn học kỳ gần hơn"
+            });
+        }
+
+        // ========== KIỂM TRA ĐÃ CÓ YÊU CẦU ĐANG CHỜ DUYỆT ==========
         var existing = await _context.GraduationRequests
             .AnyAsync(r => r.StudentId == studentId && r.Status == "PENDING");
 
         if (existing)
-            return BadRequest("Bạn đã có yêu cầu xét tốt nghiệp đang chờ duyệt");
+            return BadRequest(new { message = "Bạn đã có yêu cầu xét tốt nghiệp đang chờ duyệt" });
 
-        // Tính toán tổng tín chỉ và GPA
-        var gpa = await _context.Gpas
+        // ========== TÍNH TOÁN DỮ LIỆU HỌC TẬP ==========
+
+        // Tính tổng tín chỉ tích lũy (các môn đạt >= 5.0 và đã được duyệt)
+        var totalCredits = await _context.Grades
+            .Where(g => g.StudentId == studentId
+                     && g.TotalScore >= 5.0m
+                     && g.IsApproved == true)
+            .SumAsync(g => g.Class.Subject.Credits);
+
+        // Tính GPA tích lũy (lấy bản ghi GPA mới nhất)
+        var latestGpa = await _context.Gpas
             .Where(g => g.StudentId == studentId)
             .OrderByDescending(g => g.Semester.AcademicYear)
             .ThenByDescending(g => g.Semester.SemesterNumber)
             .Select(g => g.CumulativeGpa)
             .FirstOrDefaultAsync();
 
-        // Sửa lỗi: decimal không thể dùng ?? với int, dùng ternary hoặc kiểm tra
-        decimal cumulativeGpa = gpa > 0 ? gpa : 0;
+        decimal cumulativeGpa = latestGpa > 0 ? latestGpa : 0;
 
-        var totalCredits = await _context.Grades
-            .Where(g => g.StudentId == studentId && g.TotalScore >= 5.0m && g.IsApproved == true)
-            .SumAsync(g => g.Class.Subject.Credits);
+        // Tính công nợ học phí
+        var tuitionDebt = await _context.Tuitions
+            .Where(t => t.StudentId == studentId && t.Status != "PAID")
+            .SumAsync(t => t.Amount - t.AmountPaid);
 
-        // Kiểm tra semester tồn tại
-        var semester = await _context.Semesters.FindAsync(dto.SemesterId);
-        if (semester == null)
-            return BadRequest("Học kỳ không tồn tại");
-
-        // Kiểm tra điều kiện tốt nghiệp
+        // Kiểm tra hoàn thành môn bắt buộc
         var mandatoryCompleted = await CheckMandatorySubjectsCompleted(studentId);
 
+        // ========== KIỂM TRA ĐIỀU KIỆN ĐẦU VÀO ==========
+        var issues = new List<string>();
+
+        // Lấy thông tin chương trình đào tạo
+        var student = await _context.Students
+            .FirstOrDefaultAsync(s => s.StudentId == studentId);
+
+        var curriculum = await _context.Set<Curriculum>()
+            .Where(c => c.Major == student.Major && c.CohortYear <= student.AdmissionYear)
+            .OrderByDescending(c => c.CohortYear)
+            .FirstOrDefaultAsync();
+
+        var requiredCredits = curriculum?.TotalCredits ?? 120;
+
+        if (totalCredits < requiredCredits)
+            issues.Add($"Chưa đủ tín chỉ (Đã tích lũy: {totalCredits}/{requiredCredits})");
+
+        if (cumulativeGpa < 2.0m)
+            issues.Add($"GPA tích lũy chưa đạt yêu cầu (GPA: {cumulativeGpa:F2}, yêu cầu: ≥ 2.0)");
+
+        if (tuitionDebt > 0)
+            issues.Add($"Còn công nợ học phí ({tuitionDebt:N0} VNĐ)");
+
+        if (!mandatoryCompleted)
+            issues.Add("Chưa hoàn thành các môn bắt buộc");
+
+        if (issues.Any())
+        {
+            return BadRequest(new
+            {
+                message = "Bạn chưa đủ điều kiện tốt nghiệp",
+                issues = issues,
+                totalCreditsEarned = totalCredits,
+                requiredCredits = requiredCredits,
+                cumulativeGpa = cumulativeGpa,
+                tuitionDebt = tuitionDebt,
+                mandatoryCompleted = mandatoryCompleted
+            });
+        }
+
+        // ========== TẠO YÊU CẦU ==========
         var request = new GraduationRequest
         {
             StudentId = studentId,
@@ -174,7 +259,7 @@ public class GraduationRequestsController : ControllerBase
             SubmittedAt = DateTime.UtcNow,
             TotalCreditsEarned = totalCredits,
             CumulativeGpa = cumulativeGpa,
-            TuitionDebt = await CalculateTuitionDebt(studentId),
+            TuitionDebt = tuitionDebt,
             MandatoryDone = mandatoryCompleted,
             Status = "PENDING"
         };
@@ -186,37 +271,70 @@ public class GraduationRequestsController : ControllerBase
         {
             message = "Đã gửi yêu cầu xét tốt nghiệp thành công",
             requestId = request.RequestId,
-            status = request.Status
+            status = request.Status,
+            semesterName = semester.SemesterName
         });
     }
 
-    // PUT: api/GraduationRequests/{id}/review
     [HttpPut("{id}/review")]
     [Authorize(Roles = "ADMIN")]
     public async Task<IActionResult> ReviewGraduationRequest(int id, [FromBody] ReviewDto dto)
     {
-        var request = await _context.GraduationRequests
-            .FirstOrDefaultAsync(r => r.RequestId == id);
-
-        if (request == null)
-            return NotFound();
-
-        if (request.Status != "PENDING")
-            return BadRequest("Yêu cầu này đã được xử lý");
-
-        request.Status = dto.Approved ? "APPROVED" : "REJECTED";
-        request.ReviewedBy = User.FindFirst("accountId")?.Value;
-        request.ReviewedAt = DateTime.UtcNow;
-        request.ReviewNote = dto.ReviewNote;
-
-        await _context.SaveChangesAsync();
-
-        return Ok(new
+        try
         {
-            message = dto.Approved ? "Đã duyệt yêu cầu tốt nghiệp" : "Đã từ chối yêu cầu tốt nghiệp",
-            requestId = request.RequestId,
-            status = request.Status
-        });
+            var request = await _context.GraduationRequests
+                .FirstOrDefaultAsync(r => r.RequestId == id);
+
+            if (request == null)
+                return NotFound(new { message = "Không tìm thấy yêu cầu" });
+
+            if (request.Status != "PENDING")
+                return BadRequest(new { message = "Yêu cầu này đã được xử lý" });
+
+            // Lấy thông tin admin
+            var adminAccountId = User.FindFirst("accountId")?.Value
+                              ?? User.FindFirst("sub")?.Value
+                              ?? User.Identity?.Name
+                              ?? "ADMIN";
+
+            var reviewedBy = string.IsNullOrWhiteSpace(adminAccountId)
+                ? "ADMIN"
+                : adminAccountId.Trim().Length > 20
+                    ? adminAccountId.Trim().Substring(0, 20)
+                    : adminAccountId.Trim();
+
+            // Cập nhật
+            request.Status = dto.Approved ? "APPROVED" : "REJECTED";
+            request.ReviewedBy = reviewedBy;
+            request.ReviewedAt = DateTime.UtcNow;
+            request.ReviewNote = string.IsNullOrWhiteSpace(dto.ReviewNote)
+                ? null
+                : dto.ReviewNote.Trim();
+
+            // Log trước khi save
+            Console.WriteLine($"Reviewing request {id} | Status: {request.Status} | ReviewedBy: '{request.ReviewedBy}' | Note: {request.ReviewNote}");
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { success = true, message = dto.Approved ? "Đã duyệt thành công" : "Đã từ chối thành công" });
+        }
+        catch (DbUpdateException dbEx)
+        {
+            var inner = dbEx.InnerException?.Message ?? dbEx.Message;
+            Console.WriteLine($"[DbUpdateException] RequestId={id} | Error: {inner}");
+
+            return StatusCode(500, new
+            {
+                message = "Lỗi khi lưu vào database",
+                details = inner,
+                requestId = id
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Exception] {ex}");
+            return StatusCode(500, new { message = ex.Message });
+        }
     }
 
     // DELETE: api/GraduationRequests/{id}
@@ -226,15 +344,96 @@ public class GraduationRequestsController : ControllerBase
     {
         var request = await _context.GraduationRequests.FindAsync(id);
         if (request == null)
-            return NotFound();
+            return NotFound(new { message = "Không tìm thấy yêu cầu" });
 
         if (request.Status == "APPROVED")
-            return BadRequest("Không thể xóa yêu cầu đã được duyệt");
+            return BadRequest(new { message = "Không thể xóa yêu cầu đã được duyệt" });
 
         _context.GraduationRequests.Remove(request);
         await _context.SaveChangesAsync();
 
         return Ok(new { message = "Đã xóa yêu cầu thành công" });
+    }
+
+    // GET: api/GraduationRequests/check-eligibility
+    [HttpGet("check-eligibility")]
+    [Authorize(Roles = "STUDENT")]
+    public async Task<IActionResult> CheckEligibility()
+    {
+        var studentId = User.FindFirst("studentId")?.Value;
+        if (string.IsNullOrEmpty(studentId))
+            return Unauthorized(new { message = "Không tìm thấy thông tin sinh viên" });
+
+        var student = await _context.Students
+            .FirstOrDefaultAsync(s => s.StudentId == studentId);
+
+        if (student == null)
+            return NotFound(new { message = "Không tìm thấy sinh viên" });
+
+        // Lấy chương trình đào tạo
+        var curriculum = await _context.Set<Curriculum>()
+            .Where(c => c.Major == student.Major && c.CohortYear <= student.AdmissionYear)
+            .OrderByDescending(c => c.CohortYear)
+            .FirstOrDefaultAsync();
+
+        var requiredCredits = curriculum?.TotalCredits ?? 120;
+
+        // Tính tổng tín chỉ
+        var totalCredits = await _context.Grades
+            .Where(g => g.StudentId == studentId
+                     && g.TotalScore >= 5.0m
+                     && g.IsApproved == true)
+            .SumAsync(g => g.Class.Subject.Credits);
+
+        // Tính GPA
+        var latestGpa = await _context.Gpas
+            .Where(g => g.StudentId == studentId)
+            .OrderByDescending(g => g.Semester.AcademicYear)
+            .ThenByDescending(g => g.Semester.SemesterNumber)
+            .Select(g => g.CumulativeGpa)
+            .FirstOrDefaultAsync();
+
+        decimal cumulativeGpa = latestGpa > 0 ? latestGpa : 0;
+
+        // Tính công nợ
+        var tuitionDebt = await _context.Tuitions
+            .Where(t => t.StudentId == studentId && t.Status != "PAID")
+            .SumAsync(t => t.Amount - t.AmountPaid);
+
+        // Kiểm tra môn bắt buộc
+        var mandatoryCompleted = await CheckMandatorySubjectsCompleted(studentId);
+
+        // Số tín chỉ còn thiếu
+        var missingCredits = requiredCredits - totalCredits;
+
+        // Tạo danh sách lỗi
+        var issues = new List<string>();
+
+        if (missingCredits > 0)
+            issues.Add($"Còn thiếu {missingCredits} tín chỉ (Yêu cầu: {requiredCredits} TC)");
+
+        if (cumulativeGpa < 2.0m)
+            issues.Add($"GPA tích lũy chưa đạt yêu cầu (GPA hiện tại: {cumulativeGpa:F2}, yêu cầu: ≥ 2.0)");
+
+        if (tuitionDebt > 0)
+            issues.Add($"Còn công nợ học phí ({tuitionDebt:N0} VNĐ)");
+
+        if (!mandatoryCompleted)
+            issues.Add("Chưa hoàn thành các môn bắt buộc");
+
+        // Trả về response ĐƠN GIẢN - không tính toán học kỳ
+        return Ok(new
+        {
+            isEligible = issues.Count == 0,
+            totalCreditsEarned = totalCredits,
+            requiredCredits = requiredCredits,
+            cumulativeGpa = cumulativeGpa,
+            requiredGpa = 2.0,
+            tuitionDebt = tuitionDebt,
+            mandatoryCompleted = mandatoryCompleted,
+            issues = issues,
+            missingCredits = missingCredits > 0 ? missingCredits : 0
+        });
     }
 
     private async Task<bool> CheckMandatorySubjectsCompleted(string studentId)

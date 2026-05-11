@@ -43,6 +43,11 @@ public partial class Grade
 
     public bool? IsApproved { get; set; }
 
+    [StringLength(20)]
+    [Unicode(false)]
+    public string Status { get; set; } = "SAVED";
+
+
     [ForeignKey("ClassId")]
     [InverseProperty("Grades")]
     public virtual Class Class { get; set; } = null!;

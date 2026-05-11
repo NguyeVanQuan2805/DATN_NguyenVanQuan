@@ -31,10 +31,8 @@ public partial class GraduationRequest
     public string? ReviewNote { get; set; }
 
     [ForeignKey("StudentId")]
-    [InverseProperty("GraduationRequests")]
     public virtual Student? Student { get; set; }
 
     [ForeignKey("SemesterId")]
-    [InverseProperty("GraduationRequests")]
     public virtual Semester? Semester { get; set; }
 }
